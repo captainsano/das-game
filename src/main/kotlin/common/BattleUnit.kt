@@ -1,11 +1,13 @@
 package common
 
+import java.io.Serializable
+
 sealed abstract class BattleUnit(
         open val id: Int,
         open val maxHealth: Int,
         open var health: Int,
         open var hitPoints: Int
-)
+) : Serializable
 
 data class Dragon(
         override val id: Int,
