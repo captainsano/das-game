@@ -1,6 +1,7 @@
 package common
 
-object GameState {
+import java.io.Serializable
+object GameState:Serializable{
     val WIDTH = 25
     val HEIGHT = 25
 

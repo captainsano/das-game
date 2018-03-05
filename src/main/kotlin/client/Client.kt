@@ -2,6 +2,7 @@ package client
 
 import common.*
 import connection.*
+import java.io.ObjectInputStream
 import java.net.Socket
 import java.net.SocketException
 import java.io.ObjectOutputStream
@@ -19,15 +20,20 @@ import kotlin.concurrent.thread
 fun main(args: Array<String>) {
     println("Starting the client")
 
-    val request = Request(1, 2, Dragon(1, 10, 5, 3))
+    val request = Request(10, 10, Dragon(1, 10, 5, 3))
 
-    // Connected and transfer the instruction
+    // Connected and communicate
     val portNum = 9997
     try{
+        // Send instruction to Server
         val client = Socket("127.0.0.1", portNum)
         println("Connected to 127.0.0.1/$portNum")
         val output = ObjectOutputStream(client.getOutputStream())
         output.writeObject(request)
+        // Receive response from Server
+        val input = ObjectInputStream(client.getInputStream())
+        val res = input.readObject()
+        println(res.toString())
         client.close()
     }catch (se:SocketException){
         se.printStackTrace()
