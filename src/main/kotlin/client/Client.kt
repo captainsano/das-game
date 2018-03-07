@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
             val message = ObjectInputStream(serverSocket.getInputStream()).readObject()
             when (message) {
                 is UnitAssignmentMessage -> id = message.id
-                is GameStateUpdateMessage -> GameState.update(message.gameState)
+                is BoardUpdateMessage -> GameState.update(message.board)
                 else -> println("Unrecognizable message")
             }
         }
@@ -36,6 +36,7 @@ fun main(args: Array<String>) {
     thread(start = true) {
         BattleFieldPanel {
             println("This code will execute when panel closes or application is quit")
+            System.exit(0)
         }
     }.join()
 }

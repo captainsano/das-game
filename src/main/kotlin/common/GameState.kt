@@ -1,10 +1,11 @@
 package common
 
 import java.io.Serializable
+import java.util.*
 
 object GameState : Serializable {
-    val WIDTH = 25
-    val HEIGHT = 25
+    val WIDTH = 5
+    val HEIGHT = 5
 
     private var running = true
 
@@ -13,21 +14,17 @@ object GameState : Serializable {
     }
 
     @Synchronized
-    operator fun get(row: Int, col: Int): BattleUnit? {
-        if (row < 0 || row >= WIDTH || col < 0 || col >= HEIGHT) {
+    operator fun get(x: Int, y: Int): BattleUnit? {
+        if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) {
             throw IndexOutOfBoundsException()
         }
 
-        return board[row][col]
+        return board[x][y]
     }
 
     @Synchronized
-    operator fun set(row: Int, col: Int, battleUnit: BattleUnit?) {
-        if (row < 0 || row >= WIDTH || col < 0 || col >= HEIGHT) {
-            throw IndexOutOfBoundsException()
-        }
-
-        board[row][col] = battleUnit
+    fun getBoard(): Array<Array<BattleUnit?>> {
+        return board.clone()
     }
 
     @Synchronized
@@ -39,7 +36,41 @@ object GameState : Serializable {
     fun isRunning() = running
 
     @Synchronized
-    fun update(newGameState: GameState) {
-        println("Updating game state")
+    fun update(newBoard: Array<Array<BattleUnit?>>) {
+        for (x in 0 until WIDTH) {
+            for (y in 0 until HEIGHT) {
+                board[x][y] = newBoard[x][y]
+            }
+        }
     }
+
+    /**
+     * Spawn a unit at some random row column location and
+     * return the location
+     */
+    @Synchronized
+    fun spawnUnit(unit: BattleUnit) {
+        while (true) {
+            val randomX = (Math.random() * WIDTH).toInt()
+            val randomY = (Math.random() * HEIGHT).toInt()
+
+            if (board[randomX][randomY] == null) {
+                board[randomX][randomY] = unit
+                println("Spawned unit at $randomX $randomY")
+                return
+            }
+        }
+    }
+
+    fun removeUnit(unit: BattleUnit) {
+        for (i in 0 until WIDTH) {
+            for (j in 0 until HEIGHT) {
+                if (board[i][j]?.id == unit.id) {
+                    board[i][j] = null
+                }
+            }
+        }
+    }
+
+    // TODO: Handle moves, attacks and healing
 }

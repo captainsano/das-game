@@ -1,13 +1,15 @@
 package server
 
 import common.GameState
-import common.GameStateUpdateMessage
+import common.BoardUpdateMessage
+import common.Knight
 import common.UnitAssignmentMessage
 import connection.Request
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -33,12 +35,20 @@ fun main(args: Array<String>) {
                 println("Got a new client connection: $client ID: $clientId")
 
                 thread(start = true) {
+                    val knight = Knight(clientId, 50, 50, 10)
+                    GameState.spawnUnit(knight)
+
                     // Send the id of the client
                     ObjectOutputStream(client.getOutputStream()).writeObject(UnitAssignmentMessage(clientId))
 
                     while (GameState.isRunning()) {
-                        val o = ObjectInputStream(client.getInputStream()).readObject()
-                        println("Got object from client: $o")
+                        try {
+                            ObjectInputStream(client.getInputStream()).readObject()
+                            // TODO: Handle client messages
+                        } catch (e: Exception) {
+                            clients.remove(client)
+                            GameState.removeUnit(knight)
+                        }
                     }
                 }
 
@@ -52,9 +62,11 @@ fun main(args: Array<String>) {
     thread(start = true) {
         while (GameState.isRunning()) {
             for ((client) in clients) {
-                ObjectOutputStream(client.getOutputStream()).writeObject(GameStateUpdateMessage(GameState))
-
-                // TODO: Handle exception (when client dies) - on EOF exception remove from hashmap
+                try {
+                    ObjectOutputStream(client.getOutputStream()).writeObject(BoardUpdateMessage(GameState.getBoard()))
+                } catch (e: Exception) {
+                    // Do nothing (handled by the others)
+                }
             }
 
             Thread.sleep(1000)

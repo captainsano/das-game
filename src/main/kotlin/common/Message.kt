@@ -12,4 +12,4 @@ data class UnitAssignmentMessage(val id: Int) : Message()
 /**
  * Message from server to client for game state update
  */
-data class GameStateUpdateMessage(val gameState: GameState) : Message()
+data class BoardUpdateMessage(val board: Array<Array<BattleUnit?>>) : Message()
