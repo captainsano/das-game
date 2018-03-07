@@ -37,4 +37,9 @@ object GameState : Serializable {
 
     @Synchronized
     fun isRunning() = running
+
+    @Synchronized
+    fun update(newGameState: GameState) {
+        println("Updating game state")
+    }
 }

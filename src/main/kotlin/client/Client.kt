@@ -18,13 +18,17 @@ fun main(args: Array<String>) {
     val portNum = 9997
     val serverSocket = Socket("127.0.0.1", portNum)
 
+    var id = -1
+
     // Loop for getting events from server to update the game state
     thread(start = true) {
         while (GameState.isRunning()) {
-            val serverObject = ObjectInputStream(serverSocket.getInputStream()).readObject()
-
-            println("I got from Server: $serverObject")
-            // TODO: Update the game state based on received object
+            val message = ObjectInputStream(serverSocket.getInputStream()).readObject()
+            when (message) {
+                is UnitAssignmentMessage -> id = message.id
+                is GameStateUpdateMessage -> GameState.update(message.gameState)
+                else -> println("Unrecognizable message")
+            }
         }
     }
 
