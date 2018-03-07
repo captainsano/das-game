@@ -1,33 +1,58 @@
 package server
 
 import common.GameState
-import java.net.ServerSocket
-import java.io.ObjectInputStream
 import connection.Request
+import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import java.net.ServerSocket
+import java.net.Socket
+import java.util.*
+import java.util.concurrent.LinkedBlockingDeque
+import kotlin.concurrent.thread
 
-fun main(args : Array<String>){
+fun main(args: Array<String>) {
 
-    Thread({
-        val server = ServerSocket(9997)
-        println("Server running on port ${server.localPort}")
+    val server = ServerSocket(9997)
+    println("Server running on port ${server.localPort}")
 
-        while (true) {
-            // Receive instruction from client
-            val client = server.accept()
-            println("Client conected : ${client.inetAddress.hostAddress}")
-            val inStream = ObjectInputStream(client.getInputStream())
-            val instruction = inStream.readObject() as Request
-            println("Object received = ${instruction.row}, ${instruction.col}, ${instruction.state}")
-            GameState[instruction.row, instruction.col] = instruction.state
+    val clients = HashMap<Socket, Boolean>()
+    val eventQueue = LinkedBlockingDeque<Request>()
 
-            // Send back response to client
-            val os = ObjectOutputStream(client.getOutputStream())
-            os.writeObject("GameState has been changed")
-            client.close()
+    // Thread to manage incoming client connections
+    thread(start = true) {
+        server.use {
+            while (GameState.isRunning()) {
+                // Accept a client connection
+                val client = it.accept()
+                clients[client] = true
 
+                println("Got a new client connection: $client")
+
+                thread(start = true) {
+                    while (GameState.isRunning()) {
+                        val o = ObjectInputStream(client.getInputStream()).readObject()
+                        println("Got object from client: $o")
+                    }
+                }
+
+                // TODO: Handle client disconnection (Exception)
+                // TODO: Remove player from game state map if disconnected
+            }
         }
-        server.close()
-    }).start()
-}
+    }
 
+    // Thread to periodically broadcast the game state to all the clients
+    thread(start = true) {
+        while (GameState.isRunning()) {
+            for ((client, connected) in clients) {
+                if (connected) {
+                    ObjectOutputStream(client.getOutputStream()).writeObject(GameState)
+                }
+
+                // TODO: Handle exception (when client dies)
+            }
+
+            Thread.sleep(1000)
+        }
+    }.join()
+}

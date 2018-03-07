@@ -11,6 +11,12 @@ class BattleFieldPanel(
 ) : JPanel() {
     init {
         setupFrame()
+
+        while (GameState.isRunning()) {
+            Thread.sleep(1000)
+
+            this.repaint()
+        }
     }
 
     private fun setupFrame() {

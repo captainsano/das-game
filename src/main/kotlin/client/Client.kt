@@ -1,11 +1,8 @@
 package client
 
 import common.*
-import connection.*
 import java.io.ObjectInputStream
 import java.net.Socket
-import java.net.SocketException
-import java.io.ObjectOutputStream
 import kotlin.concurrent.thread
 
 /**
@@ -18,31 +15,20 @@ import kotlin.concurrent.thread
  *  - (Optional) run bot to simulate moves and failures
  */
 fun main(args: Array<String>) {
-    println("Starting the client")
-
-    val request = Request(10, 10, Dragon(1, 10, 5, 3))
-
-    // Connected and communicate
     val portNum = 9997
-    try{
-        // Send instruction to Server
-        val client = Socket("127.0.0.1", portNum)
-        println("Connected to 127.0.0.1/$portNum")
-        val output = ObjectOutputStream(client.getOutputStream())
-        output.writeObject(request)
-        // Receive response from Server
-        val input = ObjectInputStream(client.getInputStream())
-        val res = input.readObject()
-        println(res.toString())
-        client.close()
-    }catch (se:SocketException){
-        se.printStackTrace()
+    val serverSocket = Socket("127.0.0.1", portNum)
+
+    // Loop for getting events from server to update the game state
+    thread(start = true) {
+        while (GameState.isRunning()) {
+            val serverObject = ObjectInputStream(serverSocket.getInputStream()).readObject()
+
+            println("I got from Server: $serverObject")
+            // TODO: Update the game state based on received object
+        }
     }
 
-    // Mock game state
-    //GameState[10, 10] = Dragon(1, 10, 5, 3)
-    //GameState[20, 14] = Knight(2, 20, 15, 5)
-
+    // Loop for UI
     thread(start = true) {
         BattleFieldPanel {
             println("This code will execute when panel closes or application is quit")
