@@ -2,6 +2,7 @@ package client
 
 import common.*
 import java.io.ObjectInputStream
+import java.io.ObjectOutputStream
 import java.net.Socket
 import kotlin.concurrent.thread
 
@@ -30,6 +31,24 @@ fun main(args: Array<String>) {
                 else -> println("Unrecognizable message")
             }
         }
+    }
+
+    // The thread to send instruction to server
+    thread(start = true) {
+        Thread.sleep(1000)
+        val tmpBoard = GameState.getBoard()
+        var fromRow = 0
+        var fromCol = 0
+        for (i in tmpBoard.indices) {
+            for (j in tmpBoard[i].indices) {
+                if (tmpBoard[i][j]?.id == id) {
+                    fromRow = i
+                    fromCol = j
+                }
+            }
+        }
+        println("$fromRow, $fromCol")
+        ObjectOutputStream(serverSocket.getOutputStream()).writeObject(MoveUnitMessage(fromRow, fromCol, fromRow+1, fromCol))
     }
 
     // Loop for UI

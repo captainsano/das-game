@@ -18,7 +18,7 @@ fun main(args: Array<String>) {
     println("Server running on port ${server.localPort}")
 
     val clients = ConcurrentHashMap<Socket, Int>()
-    val eventQueue = ConcurrentLinkedQueue<Request>()
+    val eventQueue = ConcurrentLinkedQueue<Message>()
 
     // Thread to manage incoming client connections
     thread(start = true) {
@@ -45,8 +45,12 @@ fun main(args: Array<String>) {
 
                     while (GameState.isRunning()) {
                         try {
-                            ObjectInputStream(client.getInputStream()).readObject()
+                            val message = ObjectInputStream(client.getInputStream()).readObject()
                             // TODO: Handle client messages
+                            when(message){
+                                is Message -> eventQueue.add(message)
+                                else -> println("Unrecognizable message")
+                            }
                         } catch (e: Exception) {
                             clients.remove(client)
                             GameState.removeUnit(unit)
@@ -56,6 +60,30 @@ fun main(args: Array<String>) {
 
                 // TODO: Handle client disconnection (Exception)
                 // TODO: Remove player from game state map if disconnected
+            }
+        }
+    }
+
+    // Thread to retrieve message from eventQueue and carry out the instruction
+    thread(start = true){
+        while(GameState.isRunning()){
+            while(!eventQueue.isEmpty()){
+                val message = eventQueue.poll()
+                when(message){
+                    is MoveUnitMessage -> {
+                        if(!GameState.moveUnit(Pair(message.fromRow, message.fromCol), Pair(message.toRow, message.toCol)))
+                            println("The movement cannot be carried out!")
+                    }
+                    is DamageUnitMessage -> {
+                        if(!GameState.damageUnit(Pair(message.toRow, message.toCol), message.damagePoint))
+                            println("The target unit does not exist!")
+                    }
+                    is HealUnitMessage -> {
+                        if(!GameState.healUnit(Pair(message.toRow, message.toCol), message.healPoint))
+                            println("The target unit does not exist!")
+                    }
+                    else -> println("Unrecognisable message!")
+                }
             }
         }
     }
