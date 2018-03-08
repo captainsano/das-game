@@ -1,7 +1,8 @@
 package common
 
 import java.io.Serializable
-import java.util.*
+import kotlin.math.max
+import kotlin.math.min
 
 object GameState : Serializable {
     val WIDTH = 5
@@ -62,15 +63,77 @@ object GameState : Serializable {
         }
     }
 
+    /**
+     * Remove the given unit if present on board
+     */
+    @Synchronized
     fun removeUnit(unit: BattleUnit) {
         for (i in 0 until WIDTH) {
             for (j in 0 until HEIGHT) {
                 if (board[i][j]?.id == unit.id) {
-                    board[i][j] = null
+                    removeUnit(Pair(i, j))
                 }
             }
         }
     }
 
-    // TODO: Handle moves, attacks and healing
+    /**
+     * Remove unit at a certain location
+     */
+    @Synchronized
+    fun removeUnit(location: Pair<Int, Int>) {
+        board[location.first][location.second] = null
+    }
+
+    /**
+     * Move unit from location to location. Returns true if the move was valid else false
+     */
+    @Synchronized
+    fun moveUnit(from: Pair<Int, Int>, to: Pair<Int, Int>): Boolean {
+        val unitAtFrom = board[from.first][from.second]
+        if (unitAtFrom == null) {
+            return false
+        }
+
+        val unitAtTo = board[to.first][to.second]
+        if (unitAtTo != null) {
+            return false
+        }
+
+        board[from.first][from.second] = null
+        board[to.first][to.second] = unitAtFrom
+        return true
+    }
+
+    /**
+     * Damage a unit at a certain location
+     */
+    @Synchronized
+    fun damageUnit(location: Pair<Int, Int>, damagePoints: Int): Boolean {
+        val unitAtLocation = board[location.first][location.second]
+        if (unitAtLocation == null) {
+            return false
+        }
+
+        unitAtLocation.health = max(0, unitAtLocation.health - damagePoints)
+        if (unitAtLocation.health == 0) {
+            removeUnit(location)
+        }
+
+        return true
+    }
+
+    /**
+     * Heal a unit at a certain location
+     */
+    @Synchronized
+    fun healUnit(location: Pair<Int, Int>, healPoints: Int): Boolean {
+        val unitAtLocation = board[location.first][location.second]
+        if (unitAtLocation == null) {
+            return false
+        }
+
+        unitAtLocation.health = min(unitAtLocation.maxHealth, unitAtLocation.health + healPoints)
+        return true
+    }
 }
