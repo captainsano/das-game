@@ -1,15 +1,12 @@
 package server
 
-import common.GameState
-import common.BoardUpdateMessage
-import common.Knight
-import common.UnitAssignmentMessage
+import common.*
 import connection.Request
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.ServerSocket
 import java.net.Socket
-import java.net.SocketException
+import java.util.*
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -35,8 +32,13 @@ fun main(args: Array<String>) {
                 println("Got a new client connection: $client ID: $clientId")
 
                 thread(start = true) {
-                    val knight = Knight(clientId, 50, 50, 10)
-                    GameState.spawnUnit(knight)
+                    val unit = if (Random().nextBoolean()) {
+                        Knight(clientId, 50, 50, 10)
+                    } else {
+                        Dragon(clientId, 50, 50, 10)
+                    }
+
+                    GameState.spawnUnit(unit)
 
                     // Send the id of the client
                     ObjectOutputStream(client.getOutputStream()).writeObject(UnitAssignmentMessage(clientId))
@@ -47,7 +49,7 @@ fun main(args: Array<String>) {
                             // TODO: Handle client messages
                         } catch (e: Exception) {
                             clients.remove(client)
-                            GameState.removeUnit(knight)
+                            GameState.removeUnit(unit)
                         }
                     }
                 }
