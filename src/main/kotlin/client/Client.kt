@@ -5,7 +5,6 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.Socket
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 
@@ -64,7 +63,7 @@ fun main(args: Array<String>) {
                 println("Current X: $fromX, Current Y: $fromY")
                 val currentUnit = GameState.getBoard()[fromX][fromY]
                 // Check the type of current Unit, Knight or Dragon
-                if(currentUnit is Knight){
+                if (currentUnit is Knight) {
                     // If current Unit is Knight, it can attack/move/heal.
                     // TODO: The max distance for healing is 5 and the max distance for attack is 2.
                     direction = GameState.Direction.values()[(GameState.Direction.values().size * Math.random()).roundToInt()]
@@ -110,26 +109,20 @@ fun main(args: Array<String>) {
                             instruction = MoveUnitMessage(fromX, fromY, targetX, targetY)
                         }
                     }
-                }else{
-                    // If current unit is dragon, it can only attack nearby Knight.
-                    // TODO: Increase the close enough distance to 2 instead of 1.
-                    val adjcentKnight = LinkedList<Pair<Int,Int>>()
-                    if(fromY>0)
-                        if(GameState.getBoard()[fromX][fromY-1] is Knight)
-                            adjcentKnight.add(Pair(fromX,fromY-1))
-                    if(fromY<GameState.HEIGHT-1)
-                        if(GameState.getBoard()[fromX][fromY+1] is Knight)
-                            adjcentKnight.add(Pair(fromX,fromY+1))
-                    if(fromX>0)
-                        if(GameState.getBoard()[fromX-1][fromY] is Knight)
-                            adjcentKnight.add(Pair(fromX-1,fromY))
-                    if(fromX<GameState.WIDTH-1)
-                        if(GameState.getBoard()[fromX+1][fromY] is Knight)
-                            adjcentKnight.add(Pair(fromX+1,fromY))
+                } else {
+                    // If current unit is dragon, it can only attack nearby Knight (The max distance is 2).
+                    val maxDistance = 2
+                    val initList = mutableSetOf(Pair(fromX, fromY))
+                    val targetUnit = GenerateCoordinate(initList, maxDistance)
+                    var adjcentKnight = mutableListOf<Pair<Int, Int>>()
+                    for (curUnit in targetUnit) {
+                        if (GameState.getBoard()[curUnit.first][curUnit.second] is Knight)
+                            adjcentKnight.add(curUnit)
+                    }
 
-                    if(adjcentKnight.size == 0)
+                    if (adjcentKnight.size == 0)
                         continue@loop
-                    val attackTarget = adjcentKnight.get((adjcentKnight.size*Math.random()).roundToInt())
+                    val attackTarget = adjcentKnight.toList()[(adjcentKnight.size * Math.random()).roundToInt()]
                     instruction = DamageUnitMessage(attackTarget.first, attackTarget.second, AP)
                 }
                 ObjectOutputStream(serverSocket.getOutputStream()).writeObject(instruction)
@@ -146,4 +139,26 @@ fun main(args: Array<String>) {
             System.exit(0)
         }
     }.join()
+}
+
+fun GenerateCoordinate(fromUnit: Set<Pair<Int, Int>>, maxDistance: Int): MutableSet<Pair<Int, Int>> {
+    var targetUnit: MutableSet<Pair<Int, Int>> = fromUnit.toMutableSet()
+    when (maxDistance) {
+        0 -> {
+            return targetUnit
+        }
+        else -> {
+            for (curUnit in fromUnit) {
+                if (curUnit.first + 1 < 5)
+                    targetUnit.add(Pair(curUnit.first + 1, curUnit.second))
+                if (curUnit.first - 1 > 0)
+                    targetUnit.add(Pair(curUnit.first - 1, curUnit.second))
+                if (curUnit.second + 1 < 5)
+                    targetUnit.add(Pair(curUnit.first, curUnit.second + 1))
+                if (curUnit.second - 1 > 0)
+                    targetUnit.add(Pair(curUnit.first, curUnit.second - 1))
+            }
+            return GenerateCoordinate(targetUnit, maxDistance - 1)
+        }
+    }
 }
