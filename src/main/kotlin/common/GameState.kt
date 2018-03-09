@@ -14,6 +14,10 @@ object GameState : Serializable {
         Array<BattleUnit?>(HEIGHT) { null }
     }
 
+    enum class Direction{
+        Up, Down, Left, Right
+    }
+
     @Synchronized
     operator fun get(x: Int, y: Int): BattleUnit? {
         if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) {

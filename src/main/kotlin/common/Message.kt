@@ -24,10 +24,10 @@ data class MoveUnitMessage(val fromRow: Int, val fromCol: Int, val toRow: Int, v
  * Message from client to server for attack
  */
 
-data class DamageUnitMessage(val fromRow: Int, val fromCol: Int, val toRow: Int, val toCol: Int, val damagePoint: Int) : Message()
+data class DamageUnitMessage(val toRow: Int, val toCol: Int, val damagePoint: Int) : Message()
 
 /**
  * Message from client to server for heal
  */
 
-data class HealUnitMessage(val fromRow: Int, val fromCol: Int, val toRow: Int, val toCol: Int, val healPoint: Int) : Message()
+data class HealUnitMessage(val toRow: Int, val toCol: Int, val healPoint: Int) : Message()
