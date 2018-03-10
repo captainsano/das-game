@@ -61,7 +61,7 @@ fun main(args: Array<String>) {
                 val currentUnit = GameState.getBoard()[fromX][fromY]
                 // Check the type of current Unit, Knight or Dragon
                 if (currentUnit is Knight) {
-                    // If current Unit is Knight, it can attack/move/heal, decide type of movement first and
+                    // If current Unit is Knight, it can attack/move/heal, max distance for attack/move/heal is 2/1/5.
                     val randomAction = (0..2).random()
                     when (randomAction) {
                         // Move
@@ -143,11 +143,11 @@ fun GenerateCoordinate(fromUnit: Set<Pair<Int, Int>>, maxDistance: Int): Mutable
         }
         else -> {
             for (curUnit in fromUnit) {
-                if (curUnit.first + 1 < 5)
+                if (curUnit.first + 1 < GameState.WIDTH)
                     targetUnit.add(Pair(curUnit.first + 1, curUnit.second))
                 if (curUnit.first - 1 > 0)
                     targetUnit.add(Pair(curUnit.first - 1, curUnit.second))
-                if (curUnit.second + 1 < 5)
+                if (curUnit.second + 1 < GameState.HEIGHT)
                     targetUnit.add(Pair(curUnit.first, curUnit.second + 1))
                 if (curUnit.second - 1 > 0)
                     targetUnit.add(Pair(curUnit.first, curUnit.second - 1))
