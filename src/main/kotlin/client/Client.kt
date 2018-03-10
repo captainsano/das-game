@@ -47,10 +47,7 @@ fun main(args: Array<String>) {
                 var fromX = 0
                 var fromY = 0
                 var AP = 0
-                var targetX = -1
-                var targetY = -1
                 var instruction: Message
-                var direction: GameState.Direction
                 for (i in tmpBoard.indices) {
                     for (j in tmpBoard[i].indices) {
                         if (tmpBoard[i][j]?.id == id) {
@@ -64,51 +61,48 @@ fun main(args: Array<String>) {
                 val currentUnit = GameState.getBoard()[fromX][fromY]
                 // Check the type of current Unit, Knight or Dragon
                 if (currentUnit is Knight) {
-                    // If current Unit is Knight, it can attack/move/heal.
-                    // TODO: The max distance for healing is 5 and the max distance for attack is 2.
-                    direction = GameState.Direction.values()[(GameState.Direction.values().size * Math.random()).roundToInt()]
-                    when (direction) {
-                        GameState.Direction.Up -> {
-                            if (fromY <= 0)
-                            // The player was at the edge of the map, so he can't move north and there are no units there
+                    // If current Unit is Knight, it can attack/move/heal, decide type of movement first and
+                    val randomAction = (0..2).random()
+                    when (randomAction) {
+                        // Move
+                        0 -> {
+                            val initList = mutableSetOf(Pair(fromX, fromY))
+                            val targetUnit = GenerateCoordinate(initList, 1)
+                            val direction = targetUnit.toList()[(targetUnit.size * Math.random()).roundToInt()]
+                            instruction = MoveUnitMessage(fromX, fromY, direction.first, direction.second)
+                        }
+                        // Attack
+                        1 -> {
+                            val initList = mutableSetOf(Pair(fromX, fromY))
+                            val targetUnit = GenerateCoordinate(initList, 2)
+                            var adjcentDragon = mutableListOf<Pair<Int, Int>>()
+                            for (curUnit in targetUnit) {
+                                if (GameState.getBoard()[curUnit.first][curUnit.second] is Knight)
+                                    adjcentDragon.add(curUnit)
+                            }
+
+                            if (adjcentDragon.size == 0)
                                 continue@loop
-                            targetX = fromX
-                            targetY = fromY - 1
+                            val attackTarget = adjcentDragon.toList()[(adjcentDragon.size * Math.random()).roundToInt()]
+                            instruction = DamageUnitMessage(attackTarget.first, attackTarget.second, AP)
                         }
-                        GameState.Direction.Down -> {
-                            if (fromY >= GameState.HEIGHT - 1)
-                            // The player was at the edge of the map, so he can't move south and there are no units there
-                                continue@loop
-                            targetX = fromX
-                            targetY = fromY + 1
-                        }
-                        GameState.Direction.Left -> {
-                            if (fromX <= 0)
-                            // The player was at the edge of the map, so he can't move west and there are no units there
-                                continue@loop
-                            targetX = fromX - 1
-                            targetY = fromY
-                        }
-                        GameState.Direction.Right -> {
-                            if (fromX >= GameState.WIDTH - 1)
-                            // The player was at the edge of the map, so he can't move east and there are no units there
-                                continue@loop
-                            targetX = fromX + 1
-                            targetY = fromY
-                        }
-                    }
-                    val adjcentUnit = GameState.getBoard()[targetX][targetY]
-                    when (adjcentUnit) {
-                        is Dragon -> {
-                            instruction = DamageUnitMessage(targetX, targetY, AP)
-                        }
-                        is Knight -> {
-                            instruction = HealUnitMessage(targetX, targetY, AP)
-                        }
+                        // Heal
                         else -> {
-                            instruction = MoveUnitMessage(fromX, fromY, targetX, targetY)
+                            val initList = mutableSetOf(Pair(fromX, fromY))
+                            val targetUnit = GenerateCoordinate(initList, 5)
+                            var adjcentKnight = mutableListOf<Pair<Int, Int>>()
+                            for (curUnit in targetUnit) {
+                                if (GameState.getBoard()[curUnit.first][curUnit.second] is Knight)
+                                    adjcentKnight.add(curUnit)
+                            }
+
+                            if (adjcentKnight.size == 0)
+                                continue@loop
+                            val healTarget = adjcentKnight.toList()[(adjcentKnight.size * Math.random()).roundToInt()]
+                            instruction = DamageUnitMessage(healTarget.first, healTarget.second, AP)
                         }
                     }
+                    ObjectOutputStream(serverSocket.getOutputStream()).writeObject(instruction)
                 } else {
                     // If current unit is dragon, it can only attack nearby Knight (The max distance is 2).
                     val maxDistance = 2
@@ -162,3 +156,6 @@ fun GenerateCoordinate(fromUnit: Set<Pair<Int, Int>>, maxDistance: Int): Mutable
         }
     }
 }
+
+fun ClosedRange<Int>.random() =
+        Random().nextInt(endInclusive - start) + start
