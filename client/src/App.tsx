@@ -1,8 +1,18 @@
 import * as React from 'react';
 import './App.css';
-import Board, {DragonUnit, PlayerUnit, Unit} from './Board';
+import BoardComponent, {Board} from './Board';
+import * as socketIO from 'socket.io-client';
 
 class App extends React.Component {
+    socket = socketIO.connect('localhost:8000');
+
+    state = {
+        connected: false,
+        unitId: parseInt(sessionStorage.getItem('UNIT_ID') || '-1'),
+        timestamp: 0,
+        board: null,
+    };
+
     handleKeyUp = (e: KeyboardEvent) => {
         switch (e.keyCode) {
             case 65:
@@ -26,7 +36,6 @@ class App extends React.Component {
             default:
                 console.log('---> code: ', e.keyCode);
         }
-
     };
 
     componentWillMount() {
@@ -37,30 +46,43 @@ class App extends React.Component {
         document.removeEventListener('keyup', this.handleKeyUp);
     }
 
+    componentDidMount() {
+        console.log('---> CDM');
+        this.socket.on('connect', () => {
+            console.log('---> Connected');
+            this.setState({connected: true}, () => {
+                if (this.state.unitId === -1) {
+                    this.socket.emit('SPAWN', {}, (id: number) => {
+                        sessionStorage.setItem('UNIT_ID', id.toString());
+                        this.setState({unitId: id});
+                    });
+                } else {
+                    this.socket.emit('RECONNECT', {id: this.state.unitId}, (id: number | null) => {
+                        if (id) {
+                            sessionStorage.setItem('UNIT_ID', id.toString());
+                            this.setState({unitId: id});
+                        }
+                    });
+                }
+            });
+
+            // Start listening to game state
+            this.socket.on('STATE_UPDATE', ({board, timestamp}: { board: Board, timestamp: number }) => {
+                this.setState({board, timestamp});
+            });
+        });
+
+        this.socket.on('disconnect', () => {
+            console.log('---> Disconnected');
+            this.setState({connected: false});
+        });
+    }
+
     render() {
-        const pu: PlayerUnit = {
-            id: 1,
-            health: 50,
-            maxHealth: 50,
-            attack: 10,
-            type: 'player'
-        };
 
-        const du: DragonUnit = {
-            id: 2,
-            health: 50,
-            maxHealth: 50,
-            attack: 10,
-            type: 'dragon'
-        };
-
-        const board: (Unit | null)[][] = [
-            [{...pu, id: 1}, null, null, null, null],
-            [null, null, {...du, id: 2}, null, null],
-            [null, null, null, null, null],
-            [null, {...du, id: 3}, null, {...pu, id: 4}, null],
-            [null, null, null, null, null],
-        ];
+        const board = this.state.board ? (
+            <BoardComponent currentPlayerId={this.state.unitId} board={this.state.board!}/>
+        ) : null;
 
         return (
             <div className="App">
@@ -68,8 +90,10 @@ class App extends React.Component {
                     <h5 style={{marginBottom: '0.25em'}}>Controls:</h5>
                     <b>A</b> - Attack, <b>H</b> - Heal, <b>Up/Down/Left/Right</b> - Move
                 </div>
-                <br />
-                <Board currentPlayerId={2} board={board}/>
+                <br/>
+                <h4 style={{margin: '0.1em'}}>Connected?: {this.state.connected === true ? 'YES' : 'NO'}</h4>
+                <br/>
+                {board}
             </div>
         );
     }

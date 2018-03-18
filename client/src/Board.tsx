@@ -16,14 +16,16 @@ export interface DragonUnit extends Unit {
     type: 'dragon';
 }
 
+export type Board = (Unit | null)[][];
+
 export interface Props {
     currentPlayerId: number;
-    board: (Unit | null)[][];
+    board: Board;
 }
 
 const SQUARE_PIXEL_SIZE = 50;
 
-class Board extends React.Component<Props> {
+class BoardComponent extends React.Component<Props> {
     render() {
         const squares = this.props.board.map((row, i) => {
             const rowElems = row.map((unit, j) => {
@@ -70,4 +72,4 @@ class Board extends React.Component<Props> {
     }
 }
 
-export default Board;
+export default BoardComponent;

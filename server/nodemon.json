@@ -1,0 +1,9 @@
+{
+  "watch": [
+    "build/**/*.*"
+  ],
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "exec": "node ./build"
+}
