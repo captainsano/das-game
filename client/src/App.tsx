@@ -1,8 +1,42 @@
 import * as React from 'react';
 import './App.css';
-import Board, { DragonUnit, PlayerUnit, Unit } from './Board';
+import Board, {DragonUnit, PlayerUnit, Unit} from './Board';
 
 class App extends React.Component {
+    handleKeyUp = (e: KeyboardEvent) => {
+        switch (e.keyCode) {
+            case 65:
+                console.log('---> Attack');
+                break;
+            case 72:
+                console.log('---> Heal');
+                break;
+            case 37:
+                console.log('---> Left');
+                break;
+            case 38:
+                console.log('---> Up');
+                break;
+            case 39:
+                console.log('---> Right');
+                break;
+            case 40:
+                console.log('---> Down');
+                break;
+            default:
+                console.log('---> code: ', e.keyCode);
+        }
+
+    };
+
+    componentWillMount() {
+        document.addEventListener('keyup', this.handleKeyUp);
+    }
+
+    componentWillUnmount() {
+        document.removeEventListener('keyup', this.handleKeyUp);
+    }
+
     render() {
         const pu: PlayerUnit = {
             id: 1,
@@ -30,7 +64,12 @@ class App extends React.Component {
 
         return (
             <div className="App">
-                <Board currentPlayerId={2} board={board} />
+                <div>
+                    <h5 style={{marginBottom: '0.25em'}}>Controls:</h5>
+                    <b>A</b> - Attack, <b>H</b> - Heal, <b>Up/Down/Left/Right</b> - Move
+                </div>
+                <br />
+                <Board currentPlayerId={2} board={board}/>
             </div>
         );
     }
