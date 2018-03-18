@@ -1,5 +1,0 @@
-package common
-
-class BattleField {
-
-}
