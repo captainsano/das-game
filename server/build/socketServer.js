@@ -11,32 +11,81 @@ const createObservableFromSocketEvent = function createObservableFromSocketEvent
 };
 function socketServer(io) {
     const gameState = GameState_1.GameState.getInstance();
+    const primaryEventQueue = [];
     io.on('connection', (socket) => {
         console.log('---> Got connection from ', socket.id);
         rxjs_1.Observable.merge(createObservableFromSocketEvent(socket, 'SPAWN')
-            .do(([, respond]) => {
+            .map(([, respond]) => {
             const newUnitId = gameState.spawnUnit();
             respond && respond(newUnitId);
+            return newUnitId;
         }), createObservableFromSocketEvent(socket, 'RECONNECT')
-            .do(([{ id }, respond]) => {
+            .map(([{ id }, respond]) => {
             if (gameState.hasUnit(id)) {
                 respond && respond(null);
+                return id;
             }
-            else {
-                const newId = gameState.spawnUnit();
-                respond && respond(newId);
-            }
+            const newUnitId = gameState.spawnUnit();
+            respond && respond(newUnitId);
+            return newUnitId;
         }))
-            .flatMap(() => {
-            return rxjs_1.Observable.empty();
+            .flatMap((unitId) => {
+            socket.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
+            return createObservableFromSocketEvent(socket, 'MESSAGE')
+                .do(([{ timestamp, action }]) => {
+                primaryEventQueue.push({
+                    unitId,
+                    action,
+                    timestamp,
+                });
+            });
         })
             .takeUntil(createObservableFromSocketEvent(socket, 'disconnect'))
             .subscribe();
     });
+    // Periodically pull an event from the event queue and apply to game state
+    rxjs_1.Observable.interval(50)
+        .subscribe(() => {
+        // TODO: Handle events with very old timestamp
+        if (primaryEventQueue.length === 0)
+            return;
+        const nextEvent = primaryEventQueue.shift();
+        // TODO: Check timestamp
+        switch (nextEvent.action) {
+            case 'UP': {
+                const location = gameState.getUnitLocation(nextEvent.unitId);
+                if (location) {
+                    gameState.moveUnit([location[0], location[1]], [location[0], location[1] - 1]);
+                }
+                break;
+            }
+            case 'DOWN': {
+                const location = gameState.getUnitLocation(nextEvent.unitId);
+                if (location) {
+                    gameState.moveUnit([location[0], location[1]], [location[0], location[1] + 1]);
+                }
+                break;
+            }
+            case 'RIGHT': {
+                const location = gameState.getUnitLocation(nextEvent.unitId);
+                if (location) {
+                    gameState.moveUnit([location[0], location[1]], [location[0] + 1, location[1]]);
+                }
+                break;
+            }
+            case 'LEFT': {
+                const location = gameState.getUnitLocation(nextEvent.unitId);
+                if (location) {
+                    gameState.moveUnit([location[0], location[1]], [location[0] - 1, location[1]]);
+                }
+                break;
+            }
+        }
+    });
     // Periodically broadcast the current game state to all the connected clients
-    rxjs_1.Observable
-        .interval()
-        .delay(1000)
+    rxjs_1.Observable.interval(100)
+        .map(() => gameState.board.toString())
+        .distinctUntilChanged()
         .subscribe(() => {
         io.sockets.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
     });

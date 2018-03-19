@@ -3,15 +3,22 @@ import { Unit } from './Unit';
 
 /* Utility functions */
 export function damage(unit: Unit, points: number) {
-  return {...unit, health: Math.max(0, unit.health - points)};
+  return { ...unit, health: Math.max(0, unit.health - points) };
 }
 
 export function heal(unit: Unit, points: number) {
-  return {...unit, health: Math.min(unit.maxHealth, unit.health + points)};
+  return { ...unit, health: Math.min(unit.maxHealth, unit.health + points) };
 }
 
 export type Board = (Unit | null)[][]
 export type Square = [number, number]
+
+const isInsideBoard = function isInsideBoard(size: number, i: number): boolean {
+  if (i < 0) return false;
+  if (i > (size - 1)) return false;
+
+  return true;
+};
 
 /**
  * Move unit from x1, y1 to x2, y2
@@ -20,7 +27,18 @@ export type Square = [number, number]
  * @param {[number , number]} to
  * @returns The updated board or null on invalid move
  */
-export function moveUnit(board: Board, [x1, y1]: Square, [x2, y2]: Square): Board | null {
+const moveUnit = function moveUnit(board: Board, [x1, y1]: Square, [x2, y2]: Square): Board | null {
+  const SIZE = board.length;
+  // check if locations are inside bounds
+  if (
+    !isInsideBoard(SIZE, x1) ||
+    !isInsideBoard(SIZE, y1) ||
+    !isInsideBoard(SIZE, x2) ||
+    !isInsideBoard(SIZE, y2)
+  ) {
+    return null
+  }
+
   // Check if there is a unit on the from position
   if (board[x1][y1] === null) {
     return null;
@@ -34,7 +52,7 @@ export function moveUnit(board: Board, [x1, y1]: Square, [x2, y2]: Square): Boar
   // Check if the movement is legal
   if (
     (Math.abs(x2 - x1) === 1 && Math.abs(y2 - y1) === 0) ||
-    (Math.abs(x2- x1) === 0) && (Math.abs(y2 - y1) === 1)
+    (Math.abs(x2 - x1) === 0) && (Math.abs(y2 - y1) === 1)
   ) {
     board[x2][y2] = board[x1][y1];
     board[x1][y1] = null;
@@ -48,7 +66,7 @@ interface Snapshot {
   board: Board,
 }
 
-const BOARD_SIZE = 5;
+const BOARD_SIZE = 10;
 
 /**
  * Represents the game state
@@ -70,7 +88,7 @@ export class GameState {
 
   private constructor() {
     for (let i = 0; i < BOARD_SIZE; i++) {
-    this._board[i] = [];
+      this._board[i] = [];
       for (let j = 0; j < BOARD_SIZE; j++) {
         this._board[i].push(null);
       }
@@ -105,7 +123,7 @@ export class GameState {
           maxHealth: 50,
           health: 50,
           attack: 5,
-          type: (Math.ceil(Math.random()) % 2 === 0) ? 'dragon' : 'player',
+          type: Math.random() >= 0.5 ? 'dragon' : 'player',
         };
         return id;
       }
@@ -116,15 +134,35 @@ export class GameState {
    * Checks whether the the board contains a unit with the given id
    */
   hasUnit(id: number): boolean {
-    let found = false;
-    this.board.forEach((row) => {
-      row.forEach((unit) => {
-        if (unit && unit.id === id) {
-          found = true;
-        }
-      })
-    });
+    return this.getUnitLocation(id) != null;
+  }
 
-    return found;
+  /**
+   * Returns unit location else null
+   */
+  getUnitLocation(id: number): Square | null {
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      for (let j = 0; j < BOARD_SIZE; j++) {
+        if (this.board[i][j] && this.board[i][j]!.id === id) {
+          return [i, j];
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Move the unit id to a new location. Updates the game state and timestamp
+   */
+  moveUnit(from: Square, to: Square): boolean {
+    const newBoard = moveUnit(this.board, from, to);
+    if (newBoard) {
+      this._board = newBoard;
+      this._timestamp = this._timestamp + 1;
+      return true;
+    }
+
+    return false;
   }
 }

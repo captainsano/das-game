@@ -16,25 +16,23 @@ class App extends React.Component {
     handleKeyUp = (e: KeyboardEvent) => {
         switch (e.keyCode) {
             case 65:
-                console.log('---> Attack');
+                this.socket.emit('MESSAGE', { action: 'ATTACK', timestamp: this.state.timestamp });
                 break;
             case 72:
-                console.log('---> Heal');
+                this.socket.emit('MESSAGE', { action: 'HEAL', timestamp: this.state.timestamp });
                 break;
             case 37:
-                console.log('---> Left');
+                this.socket.emit('MESSAGE', { action: 'LEFT', timestamp: this.state.timestamp });
                 break;
             case 38:
-                console.log('---> Up');
+                this.socket.emit('MESSAGE', { action: 'UP', timestamp: this.state.timestamp });
                 break;
             case 39:
-                console.log('---> Right');
+                this.socket.emit('MESSAGE', { action: 'RIGHT', timestamp: this.state.timestamp });
                 break;
             case 40:
-                console.log('---> Down');
+                this.socket.emit('MESSAGE', { action: 'DOWN', timestamp: this.state.timestamp });
                 break;
-            default:
-                console.log('---> code: ', e.keyCode);
         }
     };
 
@@ -47,9 +45,7 @@ class App extends React.Component {
     }
 
     componentDidMount() {
-        console.log('---> CDM');
         this.socket.on('connect', () => {
-            console.log('---> Connected');
             this.setState({connected: true}, () => {
                 if (this.state.unitId === -1) {
                     this.socket.emit('SPAWN', {}, (id: number) => {
@@ -68,12 +64,12 @@ class App extends React.Component {
 
             // Start listening to game state
             this.socket.on('STATE_UPDATE', ({board, timestamp}: { board: Board, timestamp: number }) => {
+                console.log('---> received state update');
                 this.setState({board, timestamp});
             });
         });
 
         this.socket.on('disconnect', () => {
-            console.log('---> Disconnected');
             this.setState({connected: false});
         });
     }

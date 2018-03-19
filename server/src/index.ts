@@ -2,7 +2,8 @@ import * as express from 'express';
 import * as http from 'http';
 import * as socketIO from 'socket.io';
 import * as cors from 'cors';
-import socketServer from "./socketServer";
+
+import socketServer from './socketServer';
 
 const app = express();
 const server = http.createServer(app);

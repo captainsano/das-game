@@ -9,6 +9,13 @@ function heal(unit, points) {
     return Object.assign({}, unit, { health: Math.min(unit.maxHealth, unit.health + points) });
 }
 exports.heal = heal;
+const isInsideBoard = function isInsideBoard(size, i) {
+    if (i < 0)
+        return false;
+    if (i > (size - 1))
+        return false;
+    return true;
+};
 /**
  * Move unit from x1, y1 to x2, y2
  * @param {(Unit | null)[][]} board
@@ -16,7 +23,15 @@ exports.heal = heal;
  * @param {[number , number]} to
  * @returns The updated board or null on invalid move
  */
-function moveUnit(board, [x1, y1], [x2, y2]) {
+const moveUnit = function moveUnit(board, [x1, y1], [x2, y2]) {
+    const SIZE = board.length;
+    // check if locations are inside bounds
+    if (!isInsideBoard(SIZE, x1) ||
+        !isInsideBoard(SIZE, y1) ||
+        !isInsideBoard(SIZE, x2) ||
+        !isInsideBoard(SIZE, y2)) {
+        return null;
+    }
     // Check if there is a unit on the from position
     if (board[x1][y1] === null) {
         return null;
@@ -32,9 +47,8 @@ function moveUnit(board, [x1, y1], [x2, y2]) {
         board[x1][y1] = null;
     }
     return null;
-}
-exports.moveUnit = moveUnit;
-const BOARD_SIZE = 5;
+};
+const BOARD_SIZE = 10;
 /**
  * Represents the game state
  */
@@ -80,7 +94,7 @@ class GameState {
                     maxHealth: 50,
                     health: 50,
                     attack: 5,
-                    type: (Math.ceil(Math.random()) % 2 === 0) ? 'dragon' : 'player',
+                    type: Math.random() >= 0.5 ? 'dragon' : 'player',
                 };
                 return id;
             }
@@ -90,15 +104,32 @@ class GameState {
      * Checks whether the the board contains a unit with the given id
      */
     hasUnit(id) {
-        let found = false;
-        this.board.forEach((row) => {
-            row.forEach((unit) => {
-                if (unit && unit.id === id) {
-                    found = true;
+        return this.getUnitLocation(id) != null;
+    }
+    /**
+     * Returns unit location else null
+     */
+    getUnitLocation(id) {
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                if (this.board[i][j] && this.board[i][j].id === id) {
+                    return [i, j];
                 }
-            });
-        });
-        return found;
+            }
+        }
+        return null;
+    }
+    /**
+     * Move the unit id to a new location. Updates the game state and timestamp
+     */
+    moveUnit(from, to) {
+        const newBoard = moveUnit(this.board, from, to);
+        if (newBoard) {
+            this._board = newBoard;
+            this._timestamp = this._timestamp + 1;
+            return true;
+        }
+        return false;
     }
 }
 GameState.instance = null;
