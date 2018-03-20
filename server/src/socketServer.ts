@@ -1,5 +1,5 @@
 import { Server, Socket } from 'socket.io';
-import { GameState, getRandomInt, Square } from './GameState';
+import { GameState, Square } from './GameState';
 import { Observable } from 'rxjs';
 import { Observer } from 'rxjs/Observer';
 
