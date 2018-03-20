@@ -70,9 +70,9 @@ class App extends React.Component {
 
     private connect() {
         this.randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;
-        this.socket = socketIO.connect(this.randomServer);
+        this.socket = socketIO.connect(this.randomServer, { reconnection: false });
 
-        const socket = this.socket
+        const socket = this.socket;
 
         socket.on('connect', () => {
             console.log(`---> Connected to: ${this.randomServer}`);

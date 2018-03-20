@@ -46,7 +46,7 @@ function socketServer(io, thisProcess, mastersList) {
         // Handle connection to master
         if (thisProcess === currentMasterList[0]) {
             isMaster = true;
-            // initializeDragons();
+            initializeDragons();
         }
         else {
             isMaster = false;
@@ -95,16 +95,16 @@ function socketServer(io, thisProcess, mastersList) {
                         if (!isMaster && server) {
                             const s = clientSocket.connect(`http://${server}`);
                             s.on('STATE_UPDATE', ({ board, timestamp }) => {
-                                console.log('--> Got state update from server');
+                                // console.log('--> Got state update from server');
                                 gameState.setState(board, timestamp);
                             });
                             // Periodically forward events
                             return rxjs_1.Observable
-                                .interval(2500)
+                                .interval(Types_1.GAMEPLAY_INTERVAL)
                                 .filter(() => currentMaster === server)
                                 .subscribe(() => {
                                 if (s.connected) {
-                                    console.log('Forwarding to server: ', server);
+                                    // console.log('Forwarding to server: ', server);
                                     const m = forwardEventQueue.shift();
                                     if (m) {
                                         s.emit('FORWARD', m);
@@ -134,7 +134,7 @@ function socketServer(io, thisProcess, mastersList) {
             createObservableFromSocketEvent(socket, 'FORWARD')
                 .filter(() => isMaster)
                 .do(([e]) => {
-                console.log('--> Got an event from another server');
+                // console.log('--> Got an event from another server');
                 primaryEventQueue.push(e);
             })
                 .takeUntil(createObservableFromSocketEvent(socket, 'disconnect'))

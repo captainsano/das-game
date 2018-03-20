@@ -43,7 +43,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
   // Handle connection to master
   if (thisProcess === currentMasterList[0]) {
     isMaster = true;
-    // initializeDragons();
+    initializeDragons();
   } else {
     isMaster = false;
 
@@ -95,17 +95,17 @@ export default async function socketServer(io: Server, thisProcess: string, mast
             if (!isMaster && server) {
               const s = clientSocket.connect(`http://${server}`);
               s.on('STATE_UPDATE', ({ board, timestamp }: { board: Board, timestamp: number }) => {
-                console.log('--> Got state update from server');
+                // console.log('--> Got state update from server');
                 gameState.setState(board, timestamp);
               });
 
               // Periodically forward events
               return Observable
-                .interval(2500)
+                .interval(GAMEPLAY_INTERVAL)
                 .filter(() => currentMaster === server)
                 .subscribe(() => {
                   if (s.connected) {
-                    console.log('Forwarding to server: ', server);
+                    // console.log('Forwarding to server: ', server);
                     const m = forwardEventQueue.shift();
                     if (m) { s.emit('FORWARD', m) }
                   }
@@ -135,7 +135,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
     createObservableFromSocketEvent(socket, 'FORWARD')
       .filter(() => isMaster)
       .do(([e]) => {
-        console.log('--> Got an event from another server');
+        // console.log('--> Got an event from another server');
         primaryEventQueue.push(e as GameEvent)
       })
       .takeUntil(createObservableFromSocketEvent(socket, 'disconnect'))

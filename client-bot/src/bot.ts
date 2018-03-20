@@ -14,7 +14,7 @@ const servers = [
 ]
 
 let randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;
-let socket = io.connect(randomServer, { reconnect: false });
+let socket = io.connect(randomServer, { reconnection: false });
 
 const state = {
     connected: false,
@@ -25,7 +25,7 @@ const state = {
 
 const connect = function() {
     randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;
-    socket = io.connect(randomServer);
+    socket = io.connect(randomServer, { reconnection: false });
     console.log('---> Connecting to: ', randomServer);
 
     socket.on('connect', () => {
@@ -47,7 +47,7 @@ const connect = function() {
 
         // Start listening to game state
         socket.on('STATE_UPDATE', ({board, timestamp}: { board: Board, timestamp: number }) => {
-            console.log('--> Got state update');
+            // console.log('--> Got state update');
             state.board = board;
             state.timestamp = timestamp;
         });
@@ -119,6 +119,7 @@ Observable
 
         // Emit a random action
         // TODO: Check the health and move towards another player if health is low
+        // else move toward nearest dragon and attack
         // TODO: Heal if another player is nearby
         const actions = [
             {unitId: state.unitId, action: 'ATTACK', timestamp: state.timestamp},
