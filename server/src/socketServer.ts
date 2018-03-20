@@ -3,6 +3,8 @@ import { GameState, getRandomInt, Square } from './GameState';
 import { Observable } from 'rxjs';
 import { Observer } from 'rxjs/Observer';
 
+const GAMEPLAY_INTERVAL = 100;
+
 interface ClientMessage {
   timestamp: number,
   action: string,
@@ -95,106 +97,116 @@ export default function socketServer(io: Server) {
   });
 
   // Periodically pull an event from the event queue and apply to game state (Main game loop)
-  Observable.interval(100)
+  Observable.interval(GAMEPLAY_INTERVAL)
     .subscribe(() => {
       // TODO: Handle events with very old timestamp
       if (primaryEventQueue.length === 0) return;
 
       const nextEvent = primaryEventQueue.shift()!;
 
-      // TODO: Check timestamp
-      switch (nextEvent.action) {
-        case 'UP': {
-          const location = gameState.getUnitLocation(nextEvent.unitId);
-          if (location) {
-            gameState.moveUnit([location[0], location[1]], [location[0], location[1] - 1]);
-          }
-          break;
-        }
-
-        case 'DOWN': {
-          const location = gameState.getUnitLocation(nextEvent.unitId);
-          if (location) {
-            gameState.moveUnit([location[0], location[1]], [location[0], location[1] + 1]);
-          }
-          break;
-        }
-
-        case 'RIGHT': {
-          const location = gameState.getUnitLocation(nextEvent.unitId);
-          if (location) {
-            gameState.moveUnit([location[0], location[1]], [location[0] + 1, location[1]]);
-          }
-          break;
-        }
-
-        case 'LEFT': {
-          const location = gameState.getUnitLocation(nextEvent.unitId);
-          if (location) {
-            gameState.moveUnit([location[0], location[1]], [location[0] - 1, location[1]]);
-          }
-          break;
-        }
-
-        case 'HEAL': {
-          const location = gameState.getUnitLocation(nextEvent.unitId);
-          if (location) {
-            // Find another player unit clockwise from left at a distance of 2 to heal
-            const nearest = gameState.findNearestUnitOfType(location, 5, 'player');
-            if (nearest) {
-              gameState.healUnit(location, nearest);
+      if (nextEvent.timestamp <= gameState.timestamp) {
+        switch (nextEvent.action) {
+          case 'UP': {
+            const location = gameState.getUnitLocation(nextEvent.unitId);
+            if (location) {
+              gameState.moveUnit([location[0], location[1]], [location[0], location[1] - 1]);
             }
+            break;
           }
-          break;
-        }
 
-        case 'ATTACK': {
-          const location = gameState.getUnitLocation(nextEvent.unitId);
-          console.log('---> Attacking');
-          if (location) {
-            // Find another player unit clockwise from left at a distance of 2 to heal
-            const nearest = gameState.findNearestUnitOfType(location, 2, 'dragon');
-            if (nearest) {
-              console.log('---> Found nearest attacking');
-              gameState.attackUnit(location, nearest);
+          case 'DOWN': {
+            const location = gameState.getUnitLocation(nextEvent.unitId);
+            if (location) {
+              gameState.moveUnit([location[0], location[1]], [location[0], location[1] + 1]);
             }
+            break;
           }
-          break;
-        }
 
-        case 'PLAYER_ATTACK': {
-          gameState.attackUnit((nextEvent as PlayerAttackEvent).from, (nextEvent as PlayerAttackEvent).to);
-          break;
-        }
-
-        case 'SPAWN_UNIT': {
-          const id = gameState.spawnUnit((nextEvent as SpawnUnitEvent).type, (nextEvent as SpawnUnitEvent).at);
-          if ((nextEvent as SpawnUnitEvent).respond) {
-            (nextEvent as SpawnUnitEvent).respond!(id);
+          case 'RIGHT': {
+            const location = gameState.getUnitLocation(nextEvent.unitId);
+            if (location) {
+              gameState.moveUnit([location[0], location[1]], [location[0] + 1, location[1]]);
+            }
+            break;
           }
-          break;
+
+          case 'LEFT': {
+            const location = gameState.getUnitLocation(nextEvent.unitId);
+            if (location) {
+              gameState.moveUnit([location[0], location[1]], [location[0] - 1, location[1]]);
+            }
+            break;
+          }
+
+          case 'HEAL': {
+            const location = gameState.getUnitLocation(nextEvent.unitId);
+            if (location) {
+              // Find another player unit clockwise from left at a distance of 2 to heal
+              const nearest = gameState.findNearestUnitOfType(location, 5, 'player');
+              if (nearest) {
+                gameState.healUnit(location, nearest);
+              }
+            }
+            break;
+          }
+
+          case 'ATTACK': {
+            const location = gameState.getUnitLocation(nextEvent.unitId);
+            if (location) {
+              // Find another player unit clockwise from left at a distance of 2 to heal
+              const nearest = gameState.findNearestUnitOfType(location, 2, 'dragon');
+              if (nearest) {
+                gameState.attackUnit(location, nearest);
+              }
+            }
+            break;
+          }
+
+          case 'PLAYER_ATTACK': {
+            gameState.attackUnit((nextEvent as PlayerAttackEvent).from, (nextEvent as PlayerAttackEvent).to);
+            break;
+          }
+
+          case 'SPAWN_UNIT': {
+            const id = gameState.spawnUnit((nextEvent as SpawnUnitEvent).type, (nextEvent as SpawnUnitEvent).at);
+            if ((nextEvent as SpawnUnitEvent).respond) {
+              (nextEvent as SpawnUnitEvent).respond!(id);
+            }
+            break;
+          }
         }
+      } else {
+        console.log('---> Discarding event due to stale timestamp', nextEvent.timestamp, ' ', gameState.timestamp);
       }
     });
 
   // Periodically broadcast the current game state to all the connected clients
-  Observable.interval(100)
+  Observable.interval(GAMEPLAY_INTERVAL)
     .subscribe(() => {
       io.sockets.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
     });
 
 
   // Dragon attack game event loop
-  // Observable.interval(500)
-  //   .subscribe(() => {
-  //     // if (nearestPlayerLocation) {
-  //     //   primaryEventQueue.push({
-  //     //     timestamp: gameState.timestamp,
-  //     //     unitId: gameState.board[randomDragonLocation[0]][randomDragonLocation[1]]!.id,
-  //     //     action: 'PLAYER_ATTACK',
-  //     //     from: randomDragonLocation,
-  //     //     to: nearestPlayerLocation
-  //     //   } as PlayerAttackEvent)
-  //     // }
-  //   })
+  Observable.interval(GAMEPLAY_INTERVAL * 25)
+    .subscribe(() => {
+      // For each dragon, find nearest player and attack
+      for (let i = 0; i < gameState.board.length; i++) {
+        for (let j = 0; j < gameState.board.length; j++) {
+          const unit = gameState.board[i][j];
+          if (unit != null && unit.type === 'dragon') {
+            const nearestPlayerLocation = gameState.findNearestUnitOfType([i, j], 2, 'player');
+            if (nearestPlayerLocation) {
+              primaryEventQueue.push({
+                timestamp: gameState.timestamp,
+                unitId: unit.id,
+                action: 'PLAYER_ATTACK',
+                from: [i, j],
+                to: nearestPlayerLocation
+              } as PlayerAttackEvent)
+            }
+          }
+        }
+      }
+    })
 }

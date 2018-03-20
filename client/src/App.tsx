@@ -89,6 +89,7 @@ class App extends React.Component {
                 </div>
                 <br/>
                 <h4 style={{margin: '0.1em'}}>Connected?: {this.state.connected === true ? 'YES' : 'NO'}</h4>
+                <h4 style={{margin: '0.1em'}}>Timestamp: {this.state.timestamp}</h4>
                 <br/>
                 {board}
             </div>

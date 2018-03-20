@@ -35,7 +35,7 @@ export function getDistance([x1, y1]: Square, [x2, y2]: Square) {
  * @param {[number , number]} to
  * @returns The updated board or null on invalid move
  */
-const moveUnit = function moveUnit(board: Board, [x1, y1]: Square, [x2, y2]: Square): Board | null {
+const moveUnit = function moveUnit(board: Board, [x1, y1]: Square, [x2, y2]: Square): boolean {
   const SIZE = board.length;
   // check if locations are inside bounds
   if (
@@ -44,23 +44,23 @@ const moveUnit = function moveUnit(board: Board, [x1, y1]: Square, [x2, y2]: Squ
     !isInsideBoard(SIZE, x2) ||
     !isInsideBoard(SIZE, y2)
   ) {
-    return null
+    return false
   }
 
   // Check if there is a unit on the from position
   if (board[x1][y1] === null) {
-    return null;
+    return false;
   }
 
   // Check if the to position is occupied
   if (board[x2][y2] !== null) {
-    return null;
+    return false;
   }
 
 
   // Check if the unit being moved is not a dragon
   if (board[x1][y1]!.type === 'dragon') {
-    return null;
+    return false;
   }
 
   // Check if the movement is legal
@@ -70,9 +70,10 @@ const moveUnit = function moveUnit(board: Board, [x1, y1]: Square, [x2, y2]: Squ
   ) {
     board[x2][y2] = board[x1][y1];
     board[x1][y1] = null;
+    return true
   }
 
-  return null;
+  return false;
 };
 
 interface Snapshot {
@@ -107,6 +108,10 @@ export class GameState {
         this._board[i].push(null);
       }
     }
+  }
+
+  private incrementTimestamp() {
+    this._timestamp = this._timestamp + 1;
   }
 
   // Array of boards to maintain the state
@@ -149,6 +154,8 @@ export class GameState {
       attack,
       maxHealth: health,
     };
+
+    this.incrementTimestamp();
     return id;
   }
 
@@ -190,10 +197,8 @@ export class GameState {
    * Move the unit id to a new location. Updates the game state and timestamp
    */
   moveUnit(from: Square, to: Square): boolean {
-    const newBoard = moveUnit(this.board, from, to);
-    if (newBoard) {
-      this._board = newBoard;
-      this._timestamp = this._timestamp + 1;
+    if (moveUnit(this.board, from, to)) {
+      this.incrementTimestamp();
       return true;
     }
 
@@ -219,6 +224,8 @@ export class GameState {
     }
 
     this.board[to[0]][to[1]] = heal(this.board[to[0]][to[1]]!, this.board[from[0]][from[1]]!.attack);
+
+    this.incrementTimestamp();
     return true;
   }
 
@@ -243,8 +250,8 @@ export class GameState {
 
     const newUnit = damage(this.board[to[0]][to[1]]!, this.board[from[0]][from[1]]!.attack);
     this.board[to[0]][to[1]] = newUnit.health <= 0 ? null : newUnit;
-    console.log('----> finished attacking');
 
+    this.incrementTimestamp();
     return true;
   }
 

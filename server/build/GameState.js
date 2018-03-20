@@ -41,27 +41,28 @@ const moveUnit = function moveUnit(board, [x1, y1], [x2, y2]) {
         !isInsideBoard(SIZE, y1) ||
         !isInsideBoard(SIZE, x2) ||
         !isInsideBoard(SIZE, y2)) {
-        return null;
+        return false;
     }
     // Check if there is a unit on the from position
     if (board[x1][y1] === null) {
-        return null;
+        return false;
     }
     // Check if the to position is occupied
     if (board[x2][y2] !== null) {
-        return null;
+        return false;
     }
     // Check if the unit being moved is not a dragon
     if (board[x1][y1].type === 'dragon') {
-        return null;
+        return false;
     }
     // Check if the movement is legal
     if ((Math.abs(x2 - x1) === 1 && Math.abs(y2 - y1) === 0) ||
         (Math.abs(x2 - x1) === 0) && (Math.abs(y2 - y1) === 1)) {
         board[x2][y2] = board[x1][y1];
         board[x1][y1] = null;
+        return true;
     }
-    return null;
+    return false;
 };
 const BOARD_SIZE = 25;
 /**
@@ -86,6 +87,9 @@ class GameState {
     }
     get timestamp() {
         return this._timestamp;
+    }
+    incrementTimestamp() {
+        this._timestamp = this._timestamp + 1;
     }
     static getInstance() {
         if (GameState.instance === null) {
@@ -119,6 +123,7 @@ class GameState {
             attack,
             maxHealth: health,
         };
+        this.incrementTimestamp();
         return id;
     }
     getDragonCount() {
@@ -155,10 +160,8 @@ class GameState {
      * Move the unit id to a new location. Updates the game state and timestamp
      */
     moveUnit(from, to) {
-        const newBoard = moveUnit(this.board, from, to);
-        if (newBoard) {
-            this._board = newBoard;
-            this._timestamp = this._timestamp + 1;
+        if (moveUnit(this.board, from, to)) {
+            this.incrementTimestamp();
             return true;
         }
         return false;
@@ -179,6 +182,7 @@ class GameState {
             return false;
         }
         this.board[to[0]][to[1]] = heal(this.board[to[0]][to[1]], this.board[from[0]][from[1]].attack);
+        this.incrementTimestamp();
         return true;
     }
     /**
@@ -199,7 +203,7 @@ class GameState {
         }
         const newUnit = damage(this.board[to[0]][to[1]], this.board[from[0]][from[1]].attack);
         this.board[to[0]][to[1]] = newUnit.health <= 0 ? null : newUnit;
-        console.log('----> finished attacking');
+        this.incrementTimestamp();
         return true;
     }
     /**
