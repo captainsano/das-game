@@ -80,7 +80,7 @@ const getDragonsCount = function getDragonsCount(): number | null {
 
 // Game loop
 Observable
-    .interval(1000)
+    .interval(1500)
     .filter(() => state.connected)
     .subscribe(() => {
         if (!isAlive()) {

@@ -3,7 +3,7 @@ import { GameState, Square } from './GameState';
 import { Observable } from 'rxjs';
 import { Observer } from 'rxjs/Observer';
 
-const GAMEPLAY_INTERVAL = 100;
+const GAMEPLAY_INTERVAL = 10;
 
 interface ClientMessage {
   timestamp: number,
@@ -181,7 +181,7 @@ export default function socketServer(io: Server) {
     });
 
   // Periodically broadcast the current game state to all the connected clients
-  Observable.interval(GAMEPLAY_INTERVAL)
+  Observable.interval(GAMEPLAY_INTERVAL * 100)
     .subscribe(() => {
       io.sockets.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
     });

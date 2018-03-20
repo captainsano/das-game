@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const GameState_1 = require("./GameState");
 const rxjs_1 = require("rxjs");
-const GAMEPLAY_INTERVAL = 100;
+const GAMEPLAY_INTERVAL = 10;
 const createObservableFromSocketEvent = function createObservableFromSocketEvent(socket, eventName) {
     return rxjs_1.Observable.create((observer) => {
         const listener = (...args) => observer.next(args);
@@ -137,7 +137,7 @@ function socketServer(io) {
         }
     });
     // Periodically broadcast the current game state to all the connected clients
-    rxjs_1.Observable.interval(GAMEPLAY_INTERVAL)
+    rxjs_1.Observable.interval(GAMEPLAY_INTERVAL * 100)
         .subscribe(() => {
         io.sockets.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
     });
