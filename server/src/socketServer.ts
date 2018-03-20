@@ -1,11 +1,12 @@
 import { Server, Socket } from 'socket.io';
-import { ClientMessage, GameEvent, GAMEPLAY_INTERVAL, SpawnUnitEvent } from './Types';
+import { Board, ClientMessage, GameEvent, GAMEPLAY_INTERVAL, SpawnUnitEvent } from './Types';
 import { GameState } from './GameState';
 import { Observable } from 'rxjs';
 import { Observer } from 'rxjs/Observer';
 import { gameplay } from "./loops/gameplay";
 import { dragonAttack } from "./loops/dragonAttack";
 import axios from 'axios';
+import * as clientSocket from 'socket.io-client'
 
 const createObservableFromSocketEvent = function createObservableFromSocketEvent(socket: Socket, eventName: string): Observable<[ClientMessage, (Function | null)]> {
   return Observable.create((observer: Observer<any>) => {
@@ -42,7 +43,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
   // Handle connection to master
   if (thisProcess === currentMasterList[0]) {
     isMaster = true;
-    initializeDragons();
+    // initializeDragons();
   } else {
     isMaster = false;
 
@@ -59,14 +60,19 @@ export default async function socketServer(io: Server, thisProcess: string, mast
         const server = currentMasterList.shift()!;
         currentMaster = server;
 
-        console.log('--> Evaluating ', server);
-
         if (server === thisProcess) {
           isMaster = true;
+          // Take any item pending in forward queue and put it in primary queue
+          let m = forwardEventQueue.shift();
+          while (m) {
+            primaryEventQueue.push(m);
+            m = forwardEventQueue.shift();
+          }
           return;
         }
 
         isMaster = false;
+        console.log(`Evaluating: ${server}`)
 
         return Observable
           .interval(1000)
@@ -86,17 +92,27 @@ export default async function socketServer(io: Server, thisProcess: string, mast
           })
           .distinctUntilChanged()
           .do((server) => {
-            console.log('---> Got server: ', server);
             if (!isMaster && server) {
+              const s = clientSocket.connect(`http://${server}`);
+              s.on('STATE_UPDATE', ({ board, timestamp }: { board: Board, timestamp: number }) => {
+                console.log('--> Got state update from server');
+                gameState.setState(board, timestamp);
+              });
+
               // Periodically forward events
               return Observable
                 .interval(2500)
                 .filter(() => currentMaster === server)
                 .subscribe(() => {
-                  // Forward events to server
-                  console.log(`---> Forwarding to ${server}`)
+                  if (s.connected) {
+                    console.log('Forwarding to server: ', server);
+                    const m = forwardEventQueue.shift();
+                    if (m) { s.emit('FORWARD', m) }
+                  }
                 })
             } else if (!server) {
+              console.log('---> Running forward loop again');
+              console.log(currentMasterList);
               forwardLoop();
             }
 
@@ -176,7 +192,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
   gameplay(() => primaryEventQueue.shift()!);
 
   // AI gameplay (if current master)
-  dragonAttack(() => isMaster, (e) => primaryEventQueue.push(e))
+  dragonAttack(() => isMaster, (e) => primaryEventQueue.push(e));
 
   // Periodically broadcast the current game state to all the connected clients
   Observable.interval(GAMEPLAY_INTERVAL * 100)

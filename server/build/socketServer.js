@@ -14,6 +14,7 @@ const rxjs_1 = require("rxjs");
 const gameplay_1 = require("./loops/gameplay");
 const dragonAttack_1 = require("./loops/dragonAttack");
 const axios_1 = require("axios");
+const clientSocket = require("socket.io-client");
 const createObservableFromSocketEvent = function createObservableFromSocketEvent(socket, eventName) {
     return rxjs_1.Observable.create((observer) => {
         const listener = (...args) => observer.next(args);
@@ -45,7 +46,7 @@ function socketServer(io, thisProcess, mastersList) {
         // Handle connection to master
         if (thisProcess === currentMasterList[0]) {
             isMaster = true;
-            initializeDragons();
+            // initializeDragons();
         }
         else {
             isMaster = false;
@@ -60,12 +61,18 @@ function socketServer(io, thisProcess, mastersList) {
                 if (currentMasterList.length > 0) {
                     const server = currentMasterList.shift();
                     currentMaster = server;
-                    console.log('--> Evaluating ', server);
                     if (server === thisProcess) {
                         isMaster = true;
+                        // Take any item pending in forward queue and put it in primary queue
+                        let m = forwardEventQueue.shift();
+                        while (m) {
+                            primaryEventQueue.push(m);
+                            m = forwardEventQueue.shift();
+                        }
                         return;
                     }
                     isMaster = false;
+                    console.log(`Evaluating: ${server}`);
                     return rxjs_1.Observable
                         .interval(1000)
                         .startWith(0)
@@ -85,18 +92,29 @@ function socketServer(io, thisProcess, mastersList) {
                     }))
                         .distinctUntilChanged()
                         .do((server) => {
-                        console.log('---> Got server: ', server);
                         if (!isMaster && server) {
+                            const s = clientSocket.connect(`http://${server}`);
+                            s.on('STATE_UPDATE', ({ board, timestamp }) => {
+                                console.log('--> Got state update from server');
+                                gameState.setState(board, timestamp);
+                            });
                             // Periodically forward events
                             return rxjs_1.Observable
                                 .interval(2500)
                                 .filter(() => currentMaster === server)
                                 .subscribe(() => {
-                                // Forward events to server
-                                console.log(`---> Forwarding to ${server}`);
+                                if (s.connected) {
+                                    console.log('Forwarding to server: ', server);
+                                    const m = forwardEventQueue.shift();
+                                    if (m) {
+                                        s.emit('FORWARD', m);
+                                    }
+                                }
                             });
                         }
                         else if (!server) {
+                            console.log('---> Running forward loop again');
+                            console.log(currentMasterList);
                             forwardLoop();
                         }
                         return rxjs_1.Observable.empty();

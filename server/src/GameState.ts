@@ -99,6 +99,11 @@ export class GameState {
     return this._timestamp;
   }
 
+  setState(board: Board, timestamp: number) {
+    this._board = board;
+    this._timestamp = timestamp;
+  }
+
   private constructor() {
     for (let i = 0; i < BOARD_SIZE; i++) {
       this._board[i] = [];

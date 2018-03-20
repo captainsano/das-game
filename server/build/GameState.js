@@ -88,6 +88,10 @@ class GameState {
     get timestamp() {
         return this._timestamp;
     }
+    setState(board, timestamp) {
+        this._board = board;
+        this._timestamp = timestamp;
+    }
     incrementTimestamp() {
         this._timestamp = this._timestamp + 1;
     }
