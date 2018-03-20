@@ -23,7 +23,7 @@ export interface Props {
     board: Board;
 }
 
-const SQUARE_PIXEL_SIZE = 50;
+const SQUARE_PIXEL_SIZE = 25;
 
 class BoardComponent extends React.Component<Props> {
     render() {
@@ -67,7 +67,10 @@ class BoardComponent extends React.Component<Props> {
         });
 
         return (
-            <svg width={500} height={500} fill="#fefefe">{squares}</svg>
+            <svg width={this.props.board.length * SQUARE_PIXEL_SIZE}
+                 height={this.props.board.length * SQUARE_PIXEL_SIZE}
+                 fill="#fefefe"
+            >{squares}</svg>
         );
     }
 }

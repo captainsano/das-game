@@ -12,39 +12,55 @@ const createObservableFromSocketEvent = function createObservableFromSocketEvent
 function socketServer(io) {
     const gameState = GameState_1.GameState.getInstance();
     const primaryEventQueue = [];
+    // Initialize the game with 20 dragons
+    for (let i = 0; i < 20; i++) {
+        primaryEventQueue.push({
+            at: gameState.getRandomVacantSquare(),
+            timestamp: gameState.timestamp,
+            unitId: -1,
+            action: 'SPAWN_UNIT',
+            type: 'dragon',
+        });
+    }
     io.on('connection', (socket) => {
-        console.log('---> Got connection from ', socket.id);
         rxjs_1.Observable.merge(createObservableFromSocketEvent(socket, 'SPAWN')
             .map(([, respond]) => {
-            const newUnitId = gameState.spawnUnit();
-            respond && respond(newUnitId);
-            return newUnitId;
+            primaryEventQueue.push({
+                action: 'SPAWN_UNIT',
+                unitId: -1,
+                type: 'player',
+                timestamp: gameState.timestamp,
+                at: gameState.getRandomVacantSquare(),
+                respond,
+            });
         }), createObservableFromSocketEvent(socket, 'RECONNECT')
             .map(([{ id }, respond]) => {
             if (gameState.hasUnit(id)) {
                 respond && respond(null);
-                return id;
             }
-            const newUnitId = gameState.spawnUnit();
-            respond && respond(newUnitId);
-            return newUnitId;
+            else {
+                primaryEventQueue.push({
+                    action: 'SPAWN_UNIT',
+                    unitId: -1,
+                    type: 'player',
+                    timestamp: gameState.timestamp,
+                    at: gameState.getRandomVacantSquare(),
+                    respond,
+                });
+            }
         }))
-            .flatMap((unitId) => {
+            .flatMap(() => {
             socket.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
             return createObservableFromSocketEvent(socket, 'MESSAGE')
-                .do(([{ timestamp, action }]) => {
-                primaryEventQueue.push({
-                    unitId,
-                    action,
-                    timestamp,
-                });
+                .do(([{ unitId, timestamp, action }]) => {
+                primaryEventQueue.push({ unitId, action, timestamp });
             });
         })
             .takeUntil(createObservableFromSocketEvent(socket, 'disconnect'))
             .subscribe();
     });
-    // Periodically pull an event from the event queue and apply to game state
-    rxjs_1.Observable.interval(50)
+    // Periodically pull an event from the event queue and apply to game state (Main game loop)
+    rxjs_1.Observable.interval(100)
         .subscribe(() => {
         // TODO: Handle events with very old timestamp
         if (primaryEventQueue.length === 0)
@@ -80,14 +96,60 @@ function socketServer(io) {
                 }
                 break;
             }
+            case 'HEAL': {
+                const location = gameState.getUnitLocation(nextEvent.unitId);
+                if (location) {
+                    // Find another player unit clockwise from left at a distance of 2 to heal
+                    const nearest = gameState.findNearestUnitOfType(location, 5, 'player');
+                    if (nearest) {
+                        gameState.healUnit(location, nearest);
+                    }
+                }
+                break;
+            }
+            case 'ATTACK': {
+                const location = gameState.getUnitLocation(nextEvent.unitId);
+                console.log('---> Attacking');
+                if (location) {
+                    // Find another player unit clockwise from left at a distance of 2 to heal
+                    const nearest = gameState.findNearestUnitOfType(location, 2, 'dragon');
+                    if (nearest) {
+                        console.log('---> Found nearest attacking');
+                        gameState.attackUnit(location, nearest);
+                    }
+                }
+                break;
+            }
+            case 'PLAYER_ATTACK': {
+                gameState.attackUnit(nextEvent.from, nextEvent.to);
+                break;
+            }
+            case 'SPAWN_UNIT': {
+                const id = gameState.spawnUnit(nextEvent.type, nextEvent.at);
+                if (nextEvent.respond) {
+                    nextEvent.respond(id);
+                }
+                break;
+            }
         }
     });
     // Periodically broadcast the current game state to all the connected clients
     rxjs_1.Observable.interval(100)
-        .map(() => gameState.board.toString())
-        .distinctUntilChanged()
         .subscribe(() => {
         io.sockets.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
     });
+    // Dragon attack game event loop
+    // Observable.interval(500)
+    //   .subscribe(() => {
+    //     // if (nearestPlayerLocation) {
+    //     //   primaryEventQueue.push({
+    //     //     timestamp: gameState.timestamp,
+    //     //     unitId: gameState.board[randomDragonLocation[0]][randomDragonLocation[1]]!.id,
+    //     //     action: 'PLAYER_ATTACK',
+    //     //     from: randomDragonLocation,
+    //     //     to: nearestPlayerLocation
+    //     //   } as PlayerAttackEvent)
+    //     // }
+    //   })
 }
 exports.default = socketServer;

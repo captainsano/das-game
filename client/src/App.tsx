@@ -16,22 +16,22 @@ class App extends React.Component {
     handleKeyUp = (e: KeyboardEvent) => {
         switch (e.keyCode) {
             case 65:
-                this.socket.emit('MESSAGE', { action: 'ATTACK', timestamp: this.state.timestamp });
+                this.socket.emit('MESSAGE', {unitId: this.state.unitId, action: 'ATTACK', timestamp: this.state.timestamp});
                 break;
             case 72:
-                this.socket.emit('MESSAGE', { action: 'HEAL', timestamp: this.state.timestamp });
+                this.socket.emit('MESSAGE', {unitId: this.state.unitId, action: 'HEAL', timestamp: this.state.timestamp});
                 break;
             case 37:
-                this.socket.emit('MESSAGE', { action: 'LEFT', timestamp: this.state.timestamp });
+                this.socket.emit('MESSAGE', {unitId: this.state.unitId, action: 'LEFT', timestamp: this.state.timestamp});
                 break;
             case 38:
-                this.socket.emit('MESSAGE', { action: 'UP', timestamp: this.state.timestamp });
+                this.socket.emit('MESSAGE', {unitId: this.state.unitId, action: 'UP', timestamp: this.state.timestamp});
                 break;
             case 39:
-                this.socket.emit('MESSAGE', { action: 'RIGHT', timestamp: this.state.timestamp });
+                this.socket.emit('MESSAGE', {unitId: this.state.unitId, action: 'RIGHT', timestamp: this.state.timestamp});
                 break;
             case 40:
-                this.socket.emit('MESSAGE', { action: 'DOWN', timestamp: this.state.timestamp });
+                this.socket.emit('MESSAGE', {unitId: this.state.unitId, action: 'DOWN', timestamp: this.state.timestamp});
                 break;
         }
     };
@@ -64,13 +64,14 @@ class App extends React.Component {
 
             // Start listening to game state
             this.socket.on('STATE_UPDATE', ({board, timestamp}: { board: Board, timestamp: number }) => {
-                console.log('---> received state update');
+                console.log('---> got state update');
                 this.setState({board, timestamp});
             });
-        });
 
-        this.socket.on('disconnect', () => {
-            this.setState({connected: false});
+            this.socket.on('disconnect', () => {
+                this.setState({connected: false});
+                this.socket.off('STATE_UPDATE');
+            });
         });
     }
 
