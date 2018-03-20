@@ -4,6 +4,7 @@ const express = require("express");
 const http = require("http");
 const socketIO = require("socket.io");
 const cors = require("cors");
+const SERVER_PORT = parseInt(process.env.SERVER_PORT || '8000', 10);
 const socketServer_1 = require("./socketServer");
 const app = express();
 const server = http.createServer(app);
@@ -12,8 +13,8 @@ app.use(cors());
 app.get('/health', (req, res) => {
     res.json({ ok: true });
 });
-server.listen(8000, () => {
-    console.log('----> Server started on port: ', 8000);
+server.listen(SERVER_PORT, () => {
+    console.log('----> Server started on port: ', SERVER_PORT);
 });
 let thisProcess = '';
 let masterProcesses = [];
@@ -25,4 +26,8 @@ for (let i = 0; i + 1 < process.argv.length; i++) {
         masterProcesses = process.argv[i + 1].split(",");
     }
 }
-socketServer_1.default(io, thisProcess, masterProcesses);
+// Wait for sometime to settle other processes start
+setTimeout(() => {
+    console.log('---> Starting socket server');
+    socketServer_1.default(io, thisProcess, masterProcesses);
+}, 5000);

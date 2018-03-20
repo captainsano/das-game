@@ -3,6 +3,8 @@ import * as http from 'http';
 import * as socketIO from 'socket.io';
 import * as cors from 'cors';
 
+const SERVER_PORT = parseInt(process.env.SERVER_PORT || '8000', 10);
+
 import socketServer from './socketServer';
 
 const app = express();
@@ -15,8 +17,8 @@ app.get('/health', (req, res) => {
   res.json({ ok: true });
 });
 
-server.listen(8000, () => {
-  console.log('----> Server started on port: ', 8000);
+server.listen(SERVER_PORT, () => {
+  console.log('----> Server started on port: ', SERVER_PORT);
 });
 
 
@@ -31,4 +33,8 @@ for (let i = 0; i + 1 < process.argv.length; i++) {
   }
 }
 
-socketServer(io, thisProcess, masterProcesses);
+// Wait for sometime to settle other processes start
+setTimeout(() => {
+  console.log('---> Starting socket server');
+  socketServer(io, thisProcess, masterProcesses);
+}, 5000);
