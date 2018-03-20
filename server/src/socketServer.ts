@@ -1,35 +1,10 @@
 import { Server, Socket } from 'socket.io';
-import { GameState, Square } from './GameState';
+import { ClientMessage, GameEvent, GAMEPLAY_INTERVAL, SpawnUnitEvent } from './Types';
+import { GameState } from './GameState';
 import { Observable } from 'rxjs';
 import { Observer } from 'rxjs/Observer';
-
-const GAMEPLAY_INTERVAL = 10;
-
-interface ClientMessage {
-  timestamp: number,
-  action: string,
-
-  [key: string]: any,
-}
-
-interface GameEvent {
-  timestamp: number,
-  unitId: number,
-  action: 'HEAL' | 'ATTACK' | 'LEFT' | 'RIGHT' | 'UP' | 'DOWN' | 'PLAYER_ATTACK' | 'SPAWN_UNIT',
-}
-
-interface PlayerAttackEvent extends GameEvent {
-  action: 'PLAYER_ATTACK',
-  from: Square,
-  to: Square,
-}
-
-interface SpawnUnitEvent extends GameEvent {
-  action: 'SPAWN_UNIT',
-  at: Square,
-  type: 'player' | 'dragon',
-  respond?: Function,
-}
+import { gameplay } from "./loops/gameplay";
+import { dragonAttack } from "./loops/dragonAttack";
 
 const createObservableFromSocketEvent = function createObservableFromSocketEvent(socket: Socket, eventName: string): Observable<[ClientMessage, (Function | null)]> {
   return Observable.create((observer: Observer<any>) => {
@@ -40,26 +15,49 @@ const createObservableFromSocketEvent = function createObservableFromSocketEvent
   });
 };
 
-export default function socketServer(io: Server) {
+export default function socketServer(io: Server, thisProcess: string, mastersList: string[]) {
+  let currentMasterList = [...mastersList];
+  let masterLive = false;
+  let isMaster = false;
+
+  // Try establishing connection to master
   const gameState = GameState.getInstance();
   const primaryEventQueue: GameEvent[] = [];
+  const forwardEventQueue: GameEvent[] = [];
 
   // Initialize the game with 20 dragons
-  for (let i = 0; i < 20; i++) {
-    primaryEventQueue.push({
-      at: gameState.getRandomVacantSquare(),
-      timestamp: gameState.timestamp,
-      unitId: -1,
-      action: 'SPAWN_UNIT',
-      type: 'dragon',
-    } as SpawnUnitEvent)
+  const initializeDragons = () => {
+    for (let i = 0; i < 20; i++) {
+      primaryEventQueue.push({
+        at: gameState.getRandomVacantSquare(),
+        timestamp: gameState.timestamp,
+        unitId: -1,
+        action: 'SPAWN_UNIT',
+        type: 'dragon',
+      } as SpawnUnitEvent)
+    }
+  };
+
+  // Handle connection to master
+  if (thisProcess === mastersList[0]) {
+    isMaster = true;
+    initializeDragons();
+  } else {
+    isMaster = false;
+
+    // Drain things in primaryEventQueue and put it in forward queue
+    let e = primaryEventQueue.shift();
+    while (e != null) {
+      forwardEventQueue.push(e);
+    }
   }
 
+  // Handle client connection (new and reconnection)
   io.on('connection', (socket) => {
     Observable.merge(
       createObservableFromSocketEvent(socket, 'SPAWN')
         .map(([, respond]) => {
-          primaryEventQueue.push({
+          (isMaster ? primaryEventQueue : forwardEventQueue).push({
             action: 'SPAWN_UNIT',
             unitId: -1,
             type: 'player',
@@ -73,7 +71,7 @@ export default function socketServer(io: Server) {
           if (gameState.hasUnit(id)) {
             respond && respond(null);
           } else {
-            primaryEventQueue.push({
+            (isMaster ? primaryEventQueue : forwardEventQueue).push({
               action: 'SPAWN_UNIT',
               unitId: -1,
               type: 'player',
@@ -87,126 +85,33 @@ export default function socketServer(io: Server) {
       .flatMap(() => {
         socket.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
 
+        // Listen to messages from client
         return createObservableFromSocketEvent(socket, 'MESSAGE')
           .do(([{ unitId, timestamp, action }]) => {
-            primaryEventQueue.push({ unitId, action, timestamp } as GameEvent)
+            // Process events if master, else forward
+            if (isMaster) {
+              primaryEventQueue.push({ unitId, action, timestamp } as GameEvent)
+            } else {
+              forwardEventQueue.push({ unitId, action, timestamp } as GameEvent)
+            }
           })
       })
       .takeUntil(createObservableFromSocketEvent(socket, 'disconnect'))
       .subscribe()
   });
 
-  // Periodically pull an event from the event queue and apply to game state (Main game loop)
-  Observable.interval(GAMEPLAY_INTERVAL)
-    .subscribe(() => {
-      // TODO: Handle events with very old timestamp
-      if (primaryEventQueue.length === 0) return;
+// Periodically pull events from the primaryQueue and process
+  gameplay(() => primaryEventQueue.shift()!);
 
-      const nextEvent = primaryEventQueue.shift()!;
+// Periodically pull events from forwardEventQueue and forward
+// TODO:
 
-      if (nextEvent.timestamp <= gameState.timestamp) {
-        switch (nextEvent.action) {
-          case 'UP': {
-            const location = gameState.getUnitLocation(nextEvent.unitId);
-            if (location) {
-              gameState.moveUnit([location[0], location[1]], [location[0], location[1] - 1]);
-            }
-            break;
-          }
+// AI gameplay (if current master)
+  dragonAttack(() => isMaster, (e) => primaryEventQueue.push(e))
 
-          case 'DOWN': {
-            const location = gameState.getUnitLocation(nextEvent.unitId);
-            if (location) {
-              gameState.moveUnit([location[0], location[1]], [location[0], location[1] + 1]);
-            }
-            break;
-          }
-
-          case 'RIGHT': {
-            const location = gameState.getUnitLocation(nextEvent.unitId);
-            if (location) {
-              gameState.moveUnit([location[0], location[1]], [location[0] + 1, location[1]]);
-            }
-            break;
-          }
-
-          case 'LEFT': {
-            const location = gameState.getUnitLocation(nextEvent.unitId);
-            if (location) {
-              gameState.moveUnit([location[0], location[1]], [location[0] - 1, location[1]]);
-            }
-            break;
-          }
-
-          case 'HEAL': {
-            const location = gameState.getUnitLocation(nextEvent.unitId);
-            if (location) {
-              // Find another player unit clockwise from left at a distance of 2 to heal
-              const nearest = gameState.findNearestUnitOfType(location, 5, 'player');
-              if (nearest) {
-                gameState.healUnit(location, nearest);
-              }
-            }
-            break;
-          }
-
-          case 'ATTACK': {
-            const location = gameState.getUnitLocation(nextEvent.unitId);
-            if (location) {
-              // Find another player unit clockwise from left at a distance of 2 to heal
-              const nearest = gameState.findNearestUnitOfType(location, 2, 'dragon');
-              if (nearest) {
-                gameState.attackUnit(location, nearest);
-              }
-            }
-            break;
-          }
-
-          case 'PLAYER_ATTACK': {
-            gameState.attackUnit((nextEvent as PlayerAttackEvent).from, (nextEvent as PlayerAttackEvent).to);
-            break;
-          }
-
-          case 'SPAWN_UNIT': {
-            const id = gameState.spawnUnit((nextEvent as SpawnUnitEvent).type, (nextEvent as SpawnUnitEvent).at);
-            if ((nextEvent as SpawnUnitEvent).respond) {
-              (nextEvent as SpawnUnitEvent).respond!(id);
-            }
-            break;
-          }
-        }
-      } else {
-        console.log('---> Discarding event due to stale timestamp', nextEvent.timestamp, ' ', gameState.timestamp);
-      }
-    });
-
-  // Periodically broadcast the current game state to all the connected clients
+// Periodically broadcast the current game state to all the connected clients
   Observable.interval(GAMEPLAY_INTERVAL * 100)
     .subscribe(() => {
       io.sockets.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
     });
-
-
-  // Dragon attack game event loop
-  Observable.interval(GAMEPLAY_INTERVAL * 25)
-    .subscribe(() => {
-      // For each dragon, find nearest player and attack
-      for (let i = 0; i < gameState.board.length; i++) {
-        for (let j = 0; j < gameState.board.length; j++) {
-          const unit = gameState.board[i][j];
-          if (unit != null && unit.type === 'dragon') {
-            const nearestPlayerLocation = gameState.findNearestUnitOfType([i, j], 2, 'player');
-            if (nearestPlayerLocation) {
-              primaryEventQueue.push({
-                timestamp: gameState.timestamp,
-                unitId: unit.id,
-                action: 'PLAYER_ATTACK',
-                from: [i, j],
-                to: nearestPlayerLocation
-              } as PlayerAttackEvent)
-            }
-          }
-        }
-      }
-    })
 }

@@ -1,5 +1,6 @@
 // Utility functions
 import { Unit } from './Unit';
+import { Board, Square } from "./Types";
 
 /* Utility functions */
 export function damage(unit: Unit, points: number) {
@@ -13,9 +14,6 @@ export function heal(unit: Unit, points: number) {
 export function getRandomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
-
-export type Board = (Unit | null)[][]
-export type Square = [number, number]
 
 export function isInsideBoard(size: number, i: number): boolean {
   if (i < 0) return false;
