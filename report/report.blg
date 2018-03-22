@@ -12,6 +12,9 @@ Warning--I didn't find a database entry for "socket.io"
 Warning--I didn't find a database entry for "ReactJS"
 Warning--I didn't find a database entry for "TSS"
 Warning--I didn't find a database entry for "timewarp"
+Warning--I didn't find a database entry for "bunyan"
+Warning--I didn't find a database entry for "log4j"
+Warning--I didn't find a database entry for "lockstep"
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
@@ -19,7 +22,7 @@ Warning--I didn't find a database entry for "timewarp"
 Done.
 You've used 5 entries,
             4087 wiz_defined-function locations,
-            841 strings with 7575 characters,
+            844 strings with 7594 characters,
 and the built_in function-call counts, 1386 in all, are:
 = -- 75
 > -- 5
@@ -58,4 +61,4 @@ warning$ -- 0
 while$ -- 0
 width$ -- 6
 write$ -- 62
-(There were 4 warnings)
+(There were 7 warnings)
