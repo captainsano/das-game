@@ -1,9 +1,15 @@
 import { Observable } from 'rxjs/Observable';
-import { GameEvent, GAMEPLAY_INTERVAL, PlayerAttackEvent, SpawnUnitEvent } from "../Types";
+import { GameEvent, GAMEPLAY_INTERVAL, PlayerAttackEvent, SpawnUnitEvent, Board } from "../Types";
 import { GameState } from '../GameState'
+
+interface StateSnapshot {
+  timestamp: number,
+  board: Board,
+}
 
 export function gameplay(getNextEvent: () => GameEvent | null) {
   const gameState = GameState.getInstance();
+  const replaySet = [] as StateSnapshot[]
 
   // Periodically pull an event from the event queue and apply to game state (Main game loop)
   Observable.interval(GAMEPLAY_INTERVAL)
@@ -11,7 +17,7 @@ export function gameplay(getNextEvent: () => GameEvent | null) {
       const nextEvent = getNextEvent();
       if (!nextEvent) return;
 
-      if (nextEvent.timestamp <= gameState.timestamp) {
+      if (gameState.timestamp - nextEvent.timestamp <= 250) {
         switch (nextEvent.action) {
           case 'UP': {
             const location = gameState.getUnitLocation(nextEvent.unitId);
@@ -82,6 +88,8 @@ export function gameplay(getNextEvent: () => GameEvent | null) {
             break;
           }
         }
+
+        // replaySet.push({ timestamp: gameState.timestamp, board: [...gameState.board] })
       } else {
         console.log('---> Discarding event due to stale timestamp', nextEvent.timestamp, ' ', gameState.timestamp);
       }

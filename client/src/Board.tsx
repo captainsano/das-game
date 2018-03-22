@@ -56,7 +56,7 @@ class BoardComponent extends React.Component<Props> {
                         cx={x + SQUARE_PIXEL_SIZE * 0.5}
                         cy={y + SQUARE_PIXEL_SIZE * 0.5}
                         r={SQUARE_PIXEL_SIZE * 0.25}
-                        fill="#fefefe"
+                        fill="#777777"
                     />
                 ) : null;
 

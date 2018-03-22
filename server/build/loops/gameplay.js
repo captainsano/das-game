@@ -5,13 +5,14 @@ const Types_1 = require("../Types");
 const GameState_1 = require("../GameState");
 function gameplay(getNextEvent) {
     const gameState = GameState_1.GameState.getInstance();
+    const replaySet = [];
     // Periodically pull an event from the event queue and apply to game state (Main game loop)
     Observable_1.Observable.interval(Types_1.GAMEPLAY_INTERVAL)
         .subscribe(() => {
         const nextEvent = getNextEvent();
         if (!nextEvent)
             return;
-        if (nextEvent.timestamp <= gameState.timestamp) {
+        if (gameState.timestamp - nextEvent.timestamp <= 250) {
             switch (nextEvent.action) {
                 case 'UP': {
                     const location = gameState.getUnitLocation(nextEvent.unitId);
@@ -75,6 +76,7 @@ function gameplay(getNextEvent) {
                     break;
                 }
             }
+            // replaySet.push({ timestamp: gameState.timestamp, board: [...gameState.board] })
         }
         else {
             console.log('---> Discarding event due to stale timestamp', nextEvent.timestamp, ' ', gameState.timestamp);
