@@ -126,11 +126,34 @@ class App extends React.Component {
             .subscribe(() => this.connect());
     }
 
+    getDragonsCount() {
+        if (this.state.board != null) {
+            let dragonsCount = 0;
+            for (let i = 0; i < (this.state.board! as Board).length; i++) {
+                for (let j = 0; j < (this.state.board! as Board).length; j++) {
+                    if (this.state.board![i][j] != null && this.state.board![i][j].type === 'dragon') {
+                        dragonsCount += 1
+                    }
+                }
+            }
+            return dragonsCount
+        }
+
+        return -1;
+    }
+
     render() {
 
         const board = this.state.board ? (
             <BoardComponent currentPlayerId={this.state.unitId} board={this.state.board!}/>
-        ) : null;
+        ) : null
+        
+        const victoryMessage = (this.state.board && this.state.timestamp > 25 && this.getDragonsCount() === 0) ? (
+            <div className="victory-message">
+                <h3>Dragons are dead mate!</h3>
+                <h4>Have some beer!</h4>
+            </div>
+        ) : null
 
         return (
             <div className="App">
@@ -143,6 +166,8 @@ class App extends React.Component {
                 <h4 style={{margin: '0.1em'}}>Timestamp: {this.state.timestamp}</h4>
                 <br/>
                 {board}
+                <br />
+                {victoryMessage}
             </div>
         );
     }
