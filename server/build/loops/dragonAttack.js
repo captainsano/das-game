@@ -6,7 +6,7 @@ const Types_1 = require("../Types");
 function dragonAttack(isMaster, addToPrimaryQueue) {
     const gameState = GameState_1.GameState.getInstance();
     // Dragon attack game event loop
-    rxjs_1.Observable.interval(Types_1.GAMEPLAY_INTERVAL * 1000)
+    rxjs_1.Observable.interval(Types_1.GAMEPLAY_INTERVAL * 10000)
         .filter(() => isMaster())
         .subscribe(() => {
         // For each dragon, find nearest player and attack

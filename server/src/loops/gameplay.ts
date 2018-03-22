@@ -87,6 +87,11 @@ export function gameplay(getNextEvent: () => GameEvent | null) {
             }
             break;
           }
+
+          case 'REMOVE_UNIT': {
+            gameState.removeUnit(nextEvent.unitId)
+            break;
+          }
         }
 
         // replaySet.push({ timestamp: gameState.timestamp, board: [...gameState.board] })

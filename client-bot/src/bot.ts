@@ -1,6 +1,6 @@
 // Client bot script
 const io = require('socket.io-client');
-import {Board} from './Board';
+import {Board, PlayerUnit} from './Board';
 import {Observable} from 'rxjs';
 
 export function getRandomInt(min: number, max: number): number {
@@ -11,6 +11,8 @@ const servers = [
     'localhost:8000',
     'localhost:8001',
     'localhost:8002',
+    'localhost:8003',
+    'localhost:8004',
 ]
 
 let randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;
@@ -36,12 +38,14 @@ const connect = function() {
             socket.emit('SPAWN', {}, (id: number) => {
                 state.unitId = id;
                 console.log('---> Unit id: ', id);
+                socket.emit('MESSAGE', {unitId: state.unitId, action: 'PING'})
             });
         } else {
             socket.emit('RECONNECT', {id: state.unitId}, (id: number | null) => {
                 if (id) {
                     state.unitId = id;
                 }
+                socket.emit('MESSAGE', {unitId: state.unitId, action: 'PING'})
             });
         }
 
@@ -68,21 +72,63 @@ Observable
         connect();
     })
 
-const isAlive = function isAlive(): boolean {
+function getDistance([x1, y1]: [number, number], [x2, y2]: [number, number]) {
+    return Math.abs(x2 - x1) + Math.abs(y2 - y1);
+};
+
+const getUnitLocation = function getUnitLocation(): [number, number] | null {
     if (state.board == null) {
-        return true;
+        return null;
     }
 
     for (let i = 0; i < state.board.length; i++) {
         for (let j = 0; j < state.board.length; j++) {
             if (state.board[i][j] != null && state.board[i][j]!.id === state.unitId) {
-                return true;
+                return [i, j];
+            }
+        }
+    }
+
+    return null;
+}
+
+const isAlive = function isAlive(): boolean {
+    return getUnitLocation() != null
+};
+
+const shouldAttack = function shouldAttack(): boolean {
+    if (state.board == null) {
+        return false;
+    }
+
+    for (let i = 0; i < state.board.length; i++) {
+        for (let j = 0; j < state.board.length; j++) {
+            if (state.board[i][j] != null && state.board[i][j]!.id === state.unitId) {
+                const unit = state.board[i][j] as PlayerUnit
+                return unit.health / unit.maxHealth > 0.5
             }
         }
     }
 
     return false;
-};
+}
+
+const getNearestUnit = function getNearestUnit(type: 'dragon' | 'player'): [number, number] | null {
+    const location = getUnitLocation();
+
+    if (location != null && state.board != null) {
+        for (let i = 0; i < state.board.length; i++) {
+            for (let j = 0; j < state.board.length; j++) {
+                if (state.board[i][j] != null && state.board[i][j]!.type === type) {
+                    if (type === 'dragon' && getDistance(location, [i, j]) <= 2) return [i, j]
+                    if (type === 'player' && getDistance(location, [i, j]) <= 5) return [i, j]
+                }
+            }
+        }
+    }
+
+    return null
+}
 
 const getDragonsCount = function getDragonsCount(): number | null {
     if (state.board == null) {
@@ -105,22 +151,21 @@ const getDragonsCount = function getDragonsCount(): number | null {
 // Game loop
 Observable
     .interval(1500)
+    // Do not send actions until connected or unitId is allocated
     .filter(() => state.connected)
+    .filter(() => state.unitId !== -1)
     .subscribe(() => {
         if (!isAlive()) {
+            console.log('---> Am dead!')
             process.exit(0);
         }
 
         const dragonsCount = getDragonsCount();
-        if (dragonsCount != null && dragonsCount === 0) {
-            // console.log('Yay! Dragons are dead!');
-            // process.exit(0);
+        if (dragonsCount != null && dragonsCount === 0 && state.timestamp > 20) {
+            console.log('Yay! Dragons are dead!');
+            process.exit(0);
         }
 
-        // Emit a random action
-        // TODO: Check the health and move towards another player if health is low
-        // else move toward nearest dragon and attack
-        // TODO: Heal if another player is nearby
         const actions = [
             {unitId: state.unitId, action: 'ATTACK', timestamp: state.timestamp},
             {unitId: state.unitId, action: 'HEAL', timestamp: state.timestamp},
@@ -130,8 +175,31 @@ Observable
             {unitId: state.unitId, action: 'DOWN', timestamp: state.timestamp},
         ];
 
-        // Emit a random action
-        socket.emit('MESSAGE', actions[getRandomInt(0, actions.length - 1)]);
+        // Bot Logic!
+        let action = null
+        if (shouldAttack()) {
+            const nearestDragonLocation = getNearestUnit('dragon')
+            if (nearestDragonLocation) {
+                action = actions[0]
+            } else {
+                // Move randomly
+                action = actions[getRandomInt(2, actions.length - 1)]
+            }
+        } else {
+            const nearestPlayerLocation = getNearestUnit('player')
+            if (nearestPlayerLocation && state.board![nearestPlayerLocation[0]][nearestPlayerLocation[1]]!.health < 7) {
+                // If the poor guy's health is < 50% then heal
+                action = actions[1]
+            } else {
+                // Move randomly
+                action = actions[getRandomInt(2, actions.length - 1)]
+            }
+        }
+
+        if (action) {
+            // console.log('---> ACTION: ', action)
+            socket.emit('MESSAGE', action)
+        }
     });
 
 // Event loop wait

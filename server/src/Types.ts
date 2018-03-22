@@ -15,7 +15,7 @@ export interface ClientMessage {
 export interface GameEvent {
   timestamp: number,
   unitId: number,
-  action: 'HEAL' | 'ATTACK' | 'LEFT' | 'RIGHT' | 'UP' | 'DOWN' | 'PLAYER_ATTACK' | 'SPAWN_UNIT',
+  action: 'HEAL' | 'ATTACK' | 'LEFT' | 'RIGHT' | 'UP' | 'DOWN' | 'PLAYER_ATTACK' | 'SPAWN_UNIT' | 'REMOVE_UNIT',
 }
 
 export interface PlayerAttackEvent extends GameEvent {
@@ -29,4 +29,5 @@ export interface SpawnUnitEvent extends GameEvent {
   at: Square,
   type: 'player' | 'dragon',
   respond?: Function,
+  socketId?: string,
 }

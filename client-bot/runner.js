@@ -10,6 +10,6 @@ for (let i = 0; i < N; i++) {
     })
 
     bot.on('exit', () => {
-        console.log('---> Bot exited');
+        console.log(`Bot ${i}: exited`);
     });
 }

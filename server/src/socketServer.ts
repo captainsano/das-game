@@ -27,6 +27,11 @@ export default async function socketServer(io: Server, thisProcess: string, mast
   const forwardEventQueue: GameEvent[] = [];
   let currentMaster = '';
 
+  const spawnResponders: {[socketId: string]: Function} = {
+    // Default buffing function
+    '': () => null
+  }
+
   // Initialize the game with 20 dragons
   const initializeDragons = () => {
     for (let i = 0; i < 20; i++) {
@@ -107,7 +112,19 @@ export default async function socketServer(io: Server, thisProcess: string, mast
                   if (s.connected) {
                     // console.log('Forwarding to server: ', server);
                     const m = forwardEventQueue.shift();
-                    if (m) { s.emit('FORWARD', m) }
+                    if (m) { 
+                      // Consider SPAWN_UNIT as a synchronous action
+                      if (m.action === 'SPAWN_UNIT') {
+                        s.emit('FORWARD', m, (unitId: number) => {
+                          if ((m as SpawnUnitEvent).socketId && spawnResponders[(m as SpawnUnitEvent).socketId || '']) {
+                            spawnResponders[(m as SpawnUnitEvent).socketId || ''](unitId)
+                            delete spawnResponders[(m as SpawnUnitEvent).socketId || '']
+                          }
+                        })
+                      } else {
+                        s.emit('FORWARD', m)
+                      }
+                    }
                   }
                 })
             } else if (!server) {
@@ -134,8 +151,12 @@ export default async function socketServer(io: Server, thisProcess: string, mast
     // Connection from other servers
     createObservableFromSocketEvent(socket, 'FORWARD')
       .filter(() => isMaster)
-      .do(([e]) => {
-        // console.log('--> Got an event from another server');
+      .do(([e, respond]) => {
+        // Attach the synchronous responder in case of SPAWN_UNIT
+        if (e.action === 'SPAWN_UNIT') {
+          e.respond = respond
+        }
+         
         primaryEventQueue.push(e as GameEvent)
       })
       .takeUntil(createObservableFromSocketEvent(socket, 'disconnect'))
@@ -145,13 +166,14 @@ export default async function socketServer(io: Server, thisProcess: string, mast
     Observable.merge(
       createObservableFromSocketEvent(socket, 'SPAWN')
         .map(([, respond]) => {
+          spawnResponders[socket.id] = respond as Function
           (isMaster ? primaryEventQueue : forwardEventQueue).push({
             action: 'SPAWN_UNIT',
-
             type: 'player',
             timestamp: gameState.timestamp,
             at: gameState.getRandomVacantSquare(),
             respond,
+            socketId: socket.id,
           } as SpawnUnitEvent);
         }),
       createObservableFromSocketEvent(socket, 'RECONNECT')
@@ -159,6 +181,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
           if (gameState.hasUnit(id)) {
             respond && respond(null);
           } else {
+            spawnResponders[socket.id] = respond as Function
             (isMaster ? primaryEventQueue : forwardEventQueue).push({
               action: 'SPAWN_UNIT',
               unitId: -1,
@@ -166,6 +189,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
               timestamp: gameState.timestamp,
               at: gameState.getRandomVacantSquare(),
               respond,
+              socketId: socket.id,
             } as SpawnUnitEvent)
           }
         })
@@ -176,6 +200,12 @@ export default async function socketServer(io: Server, thisProcess: string, mast
         // Listen to messages from client
         return createObservableFromSocketEvent(socket, 'MESSAGE')
           .do(([{ unitId, timestamp, action }]) => {
+            // Ping message to register the socket
+            if (action === 'PING') {
+              (socket as any)['unitId'] = unitId
+              return;
+            }
+
             // Process events if master, else forward
             if (isMaster) {
               primaryEventQueue.push({ unitId, action, timestamp } as GameEvent)
@@ -184,7 +214,14 @@ export default async function socketServer(io: Server, thisProcess: string, mast
             }
           })
       })
-      .takeUntil(createObservableFromSocketEvent(socket, 'disconnect'))
+      .takeUntil(
+        createObservableFromSocketEvent(socket, 'disconnect')
+          .do(() => {
+            const action = { unitId: (socket as any)['unitId'] || -999, action: 'REMOVE_UNIT', timestamp: gameState.timestamp } as GameEvent
+            if (isMaster) { primaryEventQueue.push(action) } else { forwardEventQueue.push(action) }
+          })
+          .delay(1000)
+      )
       .subscribe()
   });
 

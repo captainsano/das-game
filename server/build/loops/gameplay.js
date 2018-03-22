@@ -75,6 +75,10 @@ function gameplay(getNextEvent) {
                     }
                     break;
                 }
+                case 'REMOVE_UNIT': {
+                    gameState.removeUnit(nextEvent.unitId);
+                    break;
+                }
             }
             // replaySet.push({ timestamp: gameState.timestamp, board: [...gameState.board] })
         }

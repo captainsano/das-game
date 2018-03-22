@@ -12,6 +12,8 @@ const servers = [
     'localhost:8000',
     'localhost:8001',
     'localhost:8002',
+    'localhost:8003',
+    'localhost:8004',
 ];
 
 class App extends React.Component {
@@ -82,12 +84,14 @@ class App extends React.Component {
                     this.socket.emit('SPAWN', {}, (id: number) => {
                         sessionStorage.setItem('UNIT_ID', id.toString());
                         this.setState({unitId: id});
+                        this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
                     });
                 } else {
                     this.socket.emit('RECONNECT', {id: this.state.unitId}, (id: number | null) => {
                         if (id) {
                             sessionStorage.setItem('UNIT_ID', id.toString());
                             this.setState({unitId: id});
+                            this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
                         }
                     });
                 }

@@ -162,6 +162,20 @@ export class GameState {
     return id;
   }
 
+  /**
+   * Remove a unit from the board
+   * @param unitId The unit id to remove
+   */
+  removeUnit(unitId: number) {
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      for (let j = 0; j < BOARD_SIZE; j++) {
+        if (this.board[i][j] && this.board[i][j]!.id === unitId) {
+          this.board[i][j] = null
+        }
+      }
+    }
+  }
+
   getDragonCount(): number {
     let dragonCount = 0;
     for (let i = 0; i < BOARD_SIZE; i++) {
