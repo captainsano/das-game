@@ -5,7 +5,8 @@ import * as cors from 'cors';
 
 const SERVER_PORT = parseInt(process.env.SERVER_PORT || '8000', 10);
 
-import socketServer from './socketServer';
+import gameServer from './lib/gameServer';
+import { Logger } from './lib/Logger';
 
 const app = express();
 const server = http.createServer(app);
@@ -18,9 +19,8 @@ app.get('/health', (req, res) => {
 });
 
 server.listen(SERVER_PORT, () => {
-  console.log('----> Server started on port: ', SERVER_PORT);
+  Logger.getInstance('server').info({port: SERVER_PORT}, `Listening on port ${SERVER_PORT}`);
 });
-
 
 let thisProcess = '';
 let masterProcesses = [] as string[];
@@ -34,7 +34,4 @@ for (let i = 0; i + 1 < process.argv.length; i++) {
 }
 
 // Wait for sometime to settle other processes start
-setTimeout(() => {
-  console.log('---> Starting socket server');
-  socketServer(io, thisProcess, masterProcesses);
-}, 5000);
+gameServer(io, thisProcess, masterProcesses);

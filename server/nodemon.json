@@ -5,5 +5,5 @@
   "env": {
     "NODE_ENV": "development"
   },
-  "exec": "node ./build"
+  "exec": "SERVER_PORT=8000 node build/index.js -t localhost:8000 -m localhost:8000,localhost:8001,localhost:8002,localhost:8003,localhost:8004"
 }

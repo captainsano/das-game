@@ -8,15 +8,19 @@ export interface Unit {
     type: string;
 }
 
-export interface PlayerUnit extends Unit {
-    type: 'player';
+export interface EmptyUnit extends Unit {
+    type: 'EMPTY';
+}
+
+export interface KnightUnit extends Unit {
+    type: 'KNIGHT';
 }
 
 export interface DragonUnit extends Unit {
-    type: 'dragon';
+    type: 'DRAGON';
 }
 
-export type Board = (Unit | null)[][];
+export type Board = Unit[][];
 
 export interface Props {
     currentPlayerId: number;
@@ -37,21 +41,21 @@ class BoardComponent extends React.Component<Props> {
                     height: SQUARE_PIXEL_SIZE,
                     stroke: '#777777',
                     strokeWidth: 2,
-                    opacity: unit ? unit.health / unit.maxHealth : 1.0,
+                    opacity: unit.health / unit.maxHealth,
                 };
 
                 const unitRect = (() => {
-                    if (unit == null) {
+                    if (unit.type === 'EMPTY') {
                         return <rect {...rectProps} />;
-                    } else if (unit.type === 'player') {
+                    } else if (unit.type === 'KNIGHT') {
                         return <rect {...rectProps} fill="#00cc00"/>
-                    } else if (unit.type === 'dragon') {
+                    } else if (unit.type === 'DRAGON') {
                         return <rect {...rectProps} fill="#cc0000"/>
                     }
                     return null;
                 })();
 
-                const innerCircle = unit && unit.id === this.props.currentPlayerId ? (
+                const innerCircle = unit.id === this.props.currentPlayerId ? (
                     <circle
                         cx={x + SQUARE_PIXEL_SIZE * 0.5}
                         cy={y + SQUARE_PIXEL_SIZE * 0.5}

@@ -80,21 +80,11 @@ class App extends React.Component {
             console.log(`---> Connected to: ${this.randomServer}`);
 
             this.setState({connected: true}, () => {
-                if (this.state.unitId === -1) {
-                    this.socket.emit('SPAWN', {}, (id: number) => {
-                        sessionStorage.setItem('UNIT_ID', id.toString());
-                        this.setState({unitId: id});
-                        this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
-                    });
-                } else {
-                    this.socket.emit('RECONNECT', {id: this.state.unitId}, (id: number | null) => {
-                        if (id) {
-                            sessionStorage.setItem('UNIT_ID', id.toString());
-                            this.setState({unitId: id});
-                            this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
-                        }
-                    });
-                }
+                this.socket.emit('SPAWN_UNIT', {}, (id: number) => {
+                    sessionStorage.setItem('UNIT_ID', id.toString());
+                    this.setState({unitId: id});
+                    this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
+                });
             });
 
             // Start listening to game state
