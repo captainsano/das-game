@@ -14,6 +14,27 @@ function removeUnit(socketId) {
     };
 }
 exports.removeUnit = removeUnit;
+function moveUnit(unitId, direction) {
+    return {
+        type: 'MOVE_UNIT',
+        payload: { unitId, direction }
+    };
+}
+exports.moveUnit = moveUnit;
+function attackUnit(unitId, target = 'DRAGON') {
+    return {
+        type: 'ATTACK_UNIT',
+        payload: { unitId, target }
+    };
+}
+exports.attackUnit = attackUnit;
+function healUnit(unitId) {
+    return {
+        type: 'ATTACK_UNIT',
+        payload: { unitId }
+    };
+}
+exports.healUnit = healUnit;
 function addToQueue(timestamp, action) {
     return {
         timestamp,
@@ -22,9 +43,9 @@ function addToQueue(timestamp, action) {
     };
 }
 exports.addToQueue = addToQueue;
-function execute() {
+function drainExecuteQueue() {
     return {
-        type: 'EXECUTE',
+        type: 'DRAIN_EXECUTE_QUEUE',
     };
 }
-exports.execute = execute;
+exports.drainExecuteQueue = drainExecuteQueue;

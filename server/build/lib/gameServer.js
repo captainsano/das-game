@@ -10,7 +10,8 @@ require("rxjs");
 const rxjs_1 = require("rxjs");
 function gameServer(io, thisServer, mastersList) {
     const log = Logger_1.Logger.getInstance('GameServer');
-    const epicMiddleware = redux_observable_1.createEpicMiddleware(epic_1.loggerEpic);
+    const rootEpic = redux_observable_1.combineEpics(...epic_1.default(io));
+    const epicMiddleware = redux_observable_1.createEpicMiddleware(rootEpic);
     const store = redux_1.createStore(stateReducer_1.stateReducer, stateReducer_1.INIT_STATE, redux_1.applyMiddleware(epicMiddleware));
     // New client connected
     io.on('connection', (socket) => {
@@ -19,9 +20,27 @@ function gameServer(io, thisServer, mastersList) {
             const timestamp = (store.getState() || { timestamp: 0 }).timestamp;
             store.dispatch(actions_1.addToQueue(timestamp, actions_1.spawnUnit(socket.id, 'KNIGHT')));
         });
-        socket.on('MESSAGE', (message) => {
-            const timestamp = (store.getState() || { timestamp: 0 }).timestamp;
-            store.dispatch(actions_1.addToQueue(timestamp, actions_1.removeUnit(socket.id)));
+        socket.on('MESSAGE', ({ unitId, action, timestamp }) => {
+            switch (action) {
+                case 'ATTACK':
+                    store.dispatch(actions_1.addToQueue(timestamp, actions_1.attackUnit(unitId)));
+                    break;
+                case 'HEAL':
+                    store.dispatch(actions_1.addToQueue(timestamp, actions_1.healUnit(unitId)));
+                    break;
+                case 'LEFT':
+                    store.dispatch(actions_1.addToQueue(timestamp, actions_1.moveUnit(unitId, 'LEFT')));
+                    break;
+                case 'UP':
+                    store.dispatch(actions_1.addToQueue(timestamp, actions_1.moveUnit(unitId, 'UP')));
+                    break;
+                case 'RIGHT':
+                    store.dispatch(actions_1.addToQueue(timestamp, actions_1.moveUnit(unitId, 'RIGHT')));
+                    break;
+                case 'DOWN':
+                    store.dispatch(actions_1.addToQueue(timestamp, actions_1.moveUnit(unitId, 'DOWN')));
+                    break;
+            }
         });
         socket.on('disconnect', () => {
             const timestamp = (store.getState() || { timestamp: 0 }).timestamp;
@@ -30,8 +49,14 @@ function gameServer(io, thisServer, mastersList) {
     });
     rxjs_1.Observable
         .interval(1000)
-        .delay(5000)
-        .subscribe(() => store.dispatch(actions_1.execute()));
+        .subscribe(() => {
+        const state = store.getState();
+        if (state != null && state.executionQueue.length > 0) {
+            // TODO: Handle out of order timestamps and replays
+            state.executionQueue.forEach((a) => store.dispatch(a));
+            store.dispatch(actions_1.drainExecuteQueue());
+        }
+    });
     rxjs_1.Observable.create((o) => {
         store.subscribe(() => {
             const state = store.getState();

@@ -23,9 +23,9 @@ function stateReducer(state = exports.INIT_STATE, action) {
             const executionItem = Object.assign({}, a.action, { timestamp: a.timestamp });
             return Object.assign({}, state, { executionQueue: [...state.executionQueue, executionItem] });
         }
-        case 'EXECUTE': {
+        case 'DRAIN_EXECUTE_QUEUE': {
             // TODO: Handle timestamp
-            return Object.assign({}, state.executionQueue.reduce(stateReducer, state), { executionQueue: [] });
+            return Object.assign({}, state, { executionQueue: [] });
         }
         // ---- Game Events ----
         case 'SPAWN_UNIT': {
@@ -50,6 +50,11 @@ function stateReducer(state = exports.INIT_STATE, action) {
                 }
             }
             return state;
+        }
+        case 'MOVE_UNIT': {
+            const unitId = action.payload.unitId;
+            const direction = action.payload.direction;
+            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: util_1.moveUnitOnBoard(state.board, unitId, direction) });
         }
     }
     return state;

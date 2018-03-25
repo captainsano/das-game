@@ -22,51 +22,57 @@ class App extends React.Component {
 
     state = {
         connected: false,
-        unitId: parseInt(sessionStorage.getItem('UNIT_ID') || '-1'),
+        unitId: parseInt(sessionStorage.getItem('UNIT_ID') || '-10'),
         timestamp: 0,
         board: null,
     };
 
     handleKeyUp = (e: KeyboardEvent) => {
-        switch (e.keyCode) {
-            case 65:
-                this.socket.emit('MESSAGE', {
-                    unitId: this.state.unitId,
-                    action: 'ATTACK',
-                    timestamp: this.state.timestamp
-                });
-                break;
-            case 72:
-                this.socket.emit('MESSAGE', {
-                    unitId: this.state.unitId,
-                    action: 'HEAL',
-                    timestamp: this.state.timestamp
-                });
-                break;
-            case 37:
-                this.socket.emit('MESSAGE', {
-                    unitId: this.state.unitId,
-                    action: 'LEFT',
-                    timestamp: this.state.timestamp
-                });
-                break;
-            case 38:
-                this.socket.emit('MESSAGE', {unitId: this.state.unitId, action: 'UP', timestamp: this.state.timestamp});
-                break;
-            case 39:
-                this.socket.emit('MESSAGE', {
-                    unitId: this.state.unitId,
-                    action: 'RIGHT',
-                    timestamp: this.state.timestamp
-                });
-                break;
-            case 40:
-                this.socket.emit('MESSAGE', {
-                    unitId: this.state.unitId,
-                    action: 'DOWN',
-                    timestamp: this.state.timestamp
-                });
-                break;
+        if (this.state.unitId >= 0) {
+            switch (e.keyCode) {
+                case 65:
+                    this.socket.emit('MESSAGE', {
+                        unitId: this.state.unitId,
+                        action: 'ATTACK',
+                        timestamp: this.state.timestamp
+                    });
+                    break;
+                case 72:
+                    this.socket.emit('MESSAGE', {
+                        unitId: this.state.unitId,
+                        action: 'HEAL',
+                        timestamp: this.state.timestamp
+                    });
+                    break;
+                case 37:
+                    this.socket.emit('MESSAGE', {
+                        unitId: this.state.unitId,
+                        action: 'LEFT',
+                        timestamp: this.state.timestamp
+                    });
+                    break;
+                case 38:
+                    this.socket.emit('MESSAGE', {
+                        unitId: this.state.unitId,
+                        action: 'UP', 
+                        timestamp: this.state.timestamp
+                    });
+                    break;
+                case 39:
+                    this.socket.emit('MESSAGE', {
+                        unitId: this.state.unitId,
+                        action: 'RIGHT',
+                        timestamp: this.state.timestamp
+                    });
+                    break;
+                case 40:
+                    this.socket.emit('MESSAGE', {
+                        unitId: this.state.unitId,
+                        action: 'DOWN',
+                        timestamp: this.state.timestamp
+                    });
+                    break;
+            }
         }
     };
 
@@ -80,11 +86,12 @@ class App extends React.Component {
             console.log(`---> Connected to: ${this.randomServer}`);
 
             this.setState({connected: true}, () => {
-                this.socket.emit('SPAWN_UNIT', {}, (id: number) => {
+                this.socket.emit('SPAWN_UNIT');
+                this.socket.on('ASSIGN_UNIT_ID', (id: number) => {
                     sessionStorage.setItem('UNIT_ID', id.toString());
                     this.setState({unitId: id});
                     this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
-                });
+                })
             });
 
             // Start listening to game state
@@ -147,13 +154,10 @@ class App extends React.Component {
 
         return (
             <div className="App">
-                <div>
-                    <h5 style={{marginBottom: '0.25em'}}>Controls:</h5>
-                    <b>A</b> - Attack, <b>H</b> - Heal, <b>Up/Down/Left/Right</b> - Move
-                </div>
+                <div style={{ marginTop: '0.5em' }}><b>A</b> - Attack, <b>H</b> - Heal, <b>Up/Down/Left/Right</b> - Move</div>
                 <br/>
-                <h4 style={{margin: '0.1em'}}>Connected?: {this.state.connected === true ? 'YES' : 'NO'} ({ this.randomServer })</h4>
-                <h4 style={{margin: '0.1em'}}>Timestamp: {this.state.timestamp}</h4>
+                    <h4 style={{margin: '0.1em'}}>Connected?: {this.state.connected === true ? 'YES' : 'NO'} ({ this.state.connected && this.randomServer })</h4>
+                    <h4 style={{margin: '0.1em'}}>Timestamp: {this.state.timestamp}</h4>
                 <br/>
                 {board}
                 <br />

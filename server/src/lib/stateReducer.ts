@@ -1,13 +1,13 @@
 import { AnyAction } from 'redux'
-import { Unit, KnightUnit, DragonUnit, Board, BOARD_SIZE, makeUnit, createEmptyBoard, getRandomInt, findUnitInBoard } from './util'
-import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction } from './actions'
+import { Unit, KnightUnit, DragonUnit, Board, BOARD_SIZE, makeUnit, createEmptyBoard, getRandomInt, findUnitInBoard, moveUnitOnBoard } from './util'
+import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction, MoveUnitAction } from './actions'
 import { Logger } from './Logger';
 import { dissoc } from 'ramda'
 
 interface ActionHistory {
     timestamp: number,
     prevBoardState: Board,
-    action: GameAction,
+    action: GameAction | ExecutionAction,
 }
 
 export interface GameState {
@@ -46,10 +46,10 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
             }
         }
 
-        case 'EXECUTE': {
+        case 'DRAIN_EXECUTE_QUEUE': {
             // TODO: Handle timestamp
             return {
-                ...state.executionQueue.reduce(stateReducer, state) as GameState,
+                ...state,
                 executionQueue: [],
             }
         }
@@ -97,6 +97,17 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
             }
 
             return state
+        }
+
+        case 'MOVE_UNIT': {
+            const unitId = (action as MoveUnitAction).payload.unitId
+            const direction = (action as MoveUnitAction).payload.direction
+            
+            return {
+                ...state,
+                timestamp: state.timestamp + 1,
+                board: moveUnitOnBoard(state.board, unitId, direction)
+            }
         }
     }
 

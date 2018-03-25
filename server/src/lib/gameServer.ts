@@ -2,16 +2,18 @@ import { Server } from 'socket.io';
 import { Logger } from "./Logger";
 import { createStore, applyMiddleware } from 'redux';
 import { stateReducer, INIT_STATE, GameState } from './stateReducer';
-import { addToQueue, spawnUnit, removeUnit, execute } from './actions';
-import { createEpicMiddleware } from 'redux-observable';
-import { loggerEpic } from './epic';
+import { addToQueue, spawnUnit, removeUnit, drainExecuteQueue, attackUnit, healUnit, moveUnit } from './actions';
+import { createEpicMiddleware, combineEpics } from 'redux-observable';
+import epicFactory from './epic';
 import 'rxjs';
 import { Observable, Observer } from 'rxjs'
 
 export default function gameServer(io: Server, thisServer: string, mastersList: string[]) {
     const log = Logger.getInstance('GameServer')
 
-    const epicMiddleware = createEpicMiddleware(loggerEpic)
+    const rootEpic = combineEpics(...epicFactory(io))
+    const epicMiddleware = createEpicMiddleware(rootEpic)
+
     const store = createStore(stateReducer, INIT_STATE, applyMiddleware(epicMiddleware))
 
     // New client connected
@@ -23,9 +25,27 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
             store.dispatch(addToQueue(timestamp, spawnUnit(socket.id, 'KNIGHT')))
         })
 
-        socket.on('MESSAGE', (message) => {
-            const timestamp = (store.getState() || {timestamp: 0}).timestamp
-            store.dispatch(addToQueue(timestamp, removeUnit(socket.id)))
+        socket.on('MESSAGE', ({ unitId, action, timestamp }) => {
+            switch (action) {
+                case 'ATTACK':
+                    store.dispatch(addToQueue(timestamp, attackUnit(unitId)))
+                    break;
+                case 'HEAL':
+                    store.dispatch(addToQueue(timestamp, healUnit(unitId)))
+                    break;
+                case 'LEFT':
+                    store.dispatch(addToQueue(timestamp, moveUnit(unitId, 'LEFT')))
+                    break;
+                case 'UP':
+                    store.dispatch(addToQueue(timestamp, moveUnit(unitId, 'UP')))
+                    break;
+                case 'RIGHT':
+                    store.dispatch(addToQueue(timestamp, moveUnit(unitId, 'RIGHT')))
+                    break;
+                case 'DOWN':
+                    store.dispatch(addToQueue(timestamp, moveUnit(unitId, 'DOWN')))
+                    break;
+            }
         })
 
         socket.on('disconnect', () => {
@@ -36,8 +56,14 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
 
     Observable
         .interval(1000)
-        .delay(5000)
-        .subscribe(() => store.dispatch(execute()))
+        .subscribe(() => {
+            const state = store.getState()
+            if (state != null && state.executionQueue.length > 0) {
+                // TODO: Handle out of order timestamps and replays
+                state.executionQueue.forEach((a) => store.dispatch(a))
+                store.dispatch(drainExecuteQueue())
+            }
+        })
 
     Observable.create((o: Observer<GameState>) => {
         store.subscribe(() => {
