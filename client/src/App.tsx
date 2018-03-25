@@ -86,11 +86,15 @@ class App extends React.Component {
             console.log(`---> Connected to: ${this.randomServer}`);
 
             this.setState({connected: true}, () => {
-                this.socket.emit('SPAWN_UNIT');
+                if (sessionStorage.getItem('UNIT_ID')) {
+                    this.socket.emit('RECONNECT', { timestamp: this.state.timestamp, unitId: parseInt(sessionStorage.getItem('UNIT_ID')!, 10) });
+                } else {
+                    this.socket.emit('SPAWN_UNIT');
+                }
+
                 this.socket.on('ASSIGN_UNIT_ID', (id: number) => {
                     sessionStorage.setItem('UNIT_ID', id.toString());
                     this.setState({unitId: id});
-                    this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
                 })
             });
 
@@ -156,7 +160,7 @@ class App extends React.Component {
             <div className="App">
                 <div style={{ marginTop: '0.5em' }}><b>A</b> - Attack, <b>H</b> - Heal, <b>Up/Down/Left/Right</b> - Move</div>
                 <br/>
-                    <h4 style={{margin: '0.1em'}}>Connected?: {this.state.connected === true ? 'YES' : 'NO'} ({ this.state.connected && this.randomServer })</h4>
+                    <h4 style={{margin: '0.1em'}}>Connected?: {this.state.connected === true ? 'YES' : 'NO'} { this.state.connected && `(${this.randomServer})` }</h4>
                     <h4 style={{margin: '0.1em'}}>Timestamp: {this.state.timestamp}</h4>
                 <br/>
                 {board}

@@ -30,7 +30,7 @@ function attackUnit(unitId, target = 'DRAGON') {
 exports.attackUnit = attackUnit;
 function healUnit(unitId) {
     return {
-        type: 'ATTACK_UNIT',
+        type: 'HEAL_UNIT',
         payload: { unitId }
     };
 }

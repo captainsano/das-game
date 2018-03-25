@@ -56,6 +56,41 @@ function stateReducer(state = exports.INIT_STATE, action) {
             const direction = action.payload.direction;
             return Object.assign({}, state, { timestamp: state.timestamp + 1, board: util_1.moveUnitOnBoard(state.board, unitId, direction) });
         }
+        case 'ATTACK_UNIT': {
+            const unitId = action.payload.unitId;
+            // Find nearest dragon unit and reduce its health
+            const location = util_1.findUnitInBoard(state.board, unitId);
+            if (location != null) {
+                for (let i = 0; i < util_1.BOARD_SIZE; i++) {
+                    for (let j = 0; j < util_1.BOARD_SIZE; j++) {
+                        if (state.board[i][j].type === 'DRAGON' && util_1.getDistance(location, [i, j]) <= 2) {
+                            const updatedHealth = state.board[i][j].health - state.board[location[0]][location[1]].attack;
+                            state.board[i][j] = updatedHealth <= 0 ? util_1.makeUnit('EMPTY') : Object.assign({}, state.board[i][j], { health: updatedHealth });
+                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board] });
+                        }
+                    }
+                }
+            }
+            return state;
+        }
+        case 'HEAL_UNIT': {
+            const unitId = action.payload.unitId;
+            // Find nearest dragon unit and reduce its health
+            const location = util_1.findUnitInBoard(state.board, unitId);
+            if (location != null) {
+                for (let i = 0; i < util_1.BOARD_SIZE; i++) {
+                    for (let j = 0; j < util_1.BOARD_SIZE; j++) {
+                        if (state.board[i][j].type === 'KNIGHT' &&
+                            state.board[i][j].id !== unitId &&
+                            util_1.getDistance(location, [i, j]) <= 5) {
+                            state.board[i][j].health = Math.min(state.board[i][j].health + state.board[location[0]][location[1]].attack, state.board[i][j].maxHealth);
+                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board] });
+                        }
+                    }
+                }
+            }
+            return state;
+        }
     }
     return state;
 }

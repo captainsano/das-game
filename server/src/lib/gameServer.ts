@@ -1,12 +1,13 @@
 import { Server } from 'socket.io';
 import { Logger } from "./Logger";
+import { values, find } from 'ramda'
 import { createStore, applyMiddleware } from 'redux';
 import { stateReducer, INIT_STATE, GameState } from './stateReducer';
 import { addToQueue, spawnUnit, removeUnit, drainExecuteQueue, attackUnit, healUnit, moveUnit } from './actions';
 import { createEpicMiddleware, combineEpics } from 'redux-observable';
 import epicFactory from './epic';
 import 'rxjs';
-import { Observable, Observer } from 'rxjs'
+import { Observable, Observer, BehaviorSubject } from 'rxjs'
 import { DRAGONS_COUNT } from './util';
 
 export default function gameServer(io: Server, thisServer: string, mastersList: string[]) {
@@ -17,16 +18,39 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
 
     const store = createStore(stateReducer, INIT_STATE, applyMiddleware(epicMiddleware))
 
-    // New client connected
+    // Subject to capture all events occurring in all the sockets with a delay of 250ms
+    const globalSocketEvents = new BehaviorSubject<[string, object]>(['', {}])
+
+    // Core socket handler
     io.on('connection', (socket) => {
-        log.info({socketId: socket.id}, `Connected new socket ${socket.id}`)
+        log.info({socketId: socket.id}, `Connection`)
+        globalSocketEvents.next(['connection', {socketId: socket.id}])
 
         socket.on('SPAWN_UNIT', () => {
+            globalSocketEvents.next(['SPAWN_UNIT', {socketId: socket.id}])
             const timestamp = (store.getState() || {timestamp: 0}).timestamp
             store.dispatch(addToQueue(timestamp, spawnUnit(socket.id, 'KNIGHT')))
         })
 
+        socket.on('RECONNECT', ({ timestamp, unitId }) => {
+            globalSocketEvents.next(['RECONNECT', {socketId: socket.id, timestamp, unitId}])
+
+            const state = store.getState()
+            if (state) {
+                const foundUnitId = find((id) => id === unitId, values(state.socketIdToUnitId))
+                if (!foundUnitId) {
+                    store.dispatch(addToQueue(timestamp, spawnUnit(socket.id, 'KNIGHT')))
+                } else {
+                    socket.emit('STATE_UPDATE', {
+                        timestamp: store.getState()!.timestamp,
+                        board: store.getState()!.board
+                    })
+                }
+            }
+        })
+
         socket.on('MESSAGE', ({ unitId, action, timestamp }) => {
+            globalSocketEvents.next(['MESSAGE', {socketId: socket.id, unitId, action, timestamp}])
             switch (action) {
                 case 'ATTACK':
                     store.dispatch(addToQueue(timestamp, attackUnit(unitId)))
@@ -50,8 +74,21 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
         })
 
         socket.on('disconnect', () => {
-            const timestamp = (store.getState() || {timestamp: 0}).timestamp
-            store.dispatch(addToQueue(timestamp, removeUnit(socket.id)))
+            log.info({socketId: socket.id}, `Disconnect`)
+            globalSocketEvents.next(['disconnect', {socketId: socket.id}])
+
+            const state = store.getState()
+            const socketId = socket.id
+
+            if (state) {
+                const unitId = state.socketIdToUnitId[socket.id]
+                if (unitId) {
+                    Observable.of(0)
+                        .delay(10000)
+                        .takeUntil(globalSocketEvents.filter((event: [string, {unitId: number}]) => event[0] === 'RECONNECT' && event[1].unitId === unitId))
+                        .subscribe(() => store.dispatch(addToQueue(store.getState()!.timestamp, removeUnit(socketId))))
+                }
+            }
         })
     })
 

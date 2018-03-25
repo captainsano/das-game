@@ -22,7 +22,7 @@ function makeUnit(type, id = -999) {
                 id,
                 type: 'KNIGHT',
                 attack: getRandomInt(5, 10),
-                health,
+                health: health / 2,
                 maxHealth: health
             };
         }

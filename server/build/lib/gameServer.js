@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const Logger_1 = require("./Logger");
+const ramda_1 = require("ramda");
 const redux_1 = require("redux");
 const stateReducer_1 = require("./stateReducer");
 const actions_1 = require("./actions");
@@ -14,14 +15,35 @@ function gameServer(io, thisServer, mastersList) {
     const rootEpic = redux_observable_1.combineEpics(...epic_1.default(io));
     const epicMiddleware = redux_observable_1.createEpicMiddleware(rootEpic);
     const store = redux_1.createStore(stateReducer_1.stateReducer, stateReducer_1.INIT_STATE, redux_1.applyMiddleware(epicMiddleware));
-    // New client connected
+    // Subject to capture all events occurring in all the sockets with a delay of 250ms
+    const globalSocketEvents = new rxjs_1.BehaviorSubject(['', {}]);
+    // Core socket handler
     io.on('connection', (socket) => {
-        log.info({ socketId: socket.id }, `Connected new socket ${socket.id}`);
+        log.info({ socketId: socket.id }, `Connection`);
+        globalSocketEvents.next(['connection', { socketId: socket.id }]);
         socket.on('SPAWN_UNIT', () => {
+            globalSocketEvents.next(['SPAWN_UNIT', { socketId: socket.id }]);
             const timestamp = (store.getState() || { timestamp: 0 }).timestamp;
             store.dispatch(actions_1.addToQueue(timestamp, actions_1.spawnUnit(socket.id, 'KNIGHT')));
         });
+        socket.on('RECONNECT', ({ timestamp, unitId }) => {
+            globalSocketEvents.next(['RECONNECT', { socketId: socket.id, timestamp, unitId }]);
+            const state = store.getState();
+            if (state) {
+                const foundUnitId = ramda_1.find((id) => id === unitId, ramda_1.values(state.socketIdToUnitId));
+                if (!foundUnitId) {
+                    store.dispatch(actions_1.addToQueue(timestamp, actions_1.spawnUnit(socket.id, 'KNIGHT')));
+                }
+                else {
+                    socket.emit('STATE_UPDATE', {
+                        timestamp: store.getState().timestamp,
+                        board: store.getState().board
+                    });
+                }
+            }
+        });
         socket.on('MESSAGE', ({ unitId, action, timestamp }) => {
+            globalSocketEvents.next(['MESSAGE', { socketId: socket.id, unitId, action, timestamp }]);
             switch (action) {
                 case 'ATTACK':
                     store.dispatch(actions_1.addToQueue(timestamp, actions_1.attackUnit(unitId)));
@@ -44,8 +66,19 @@ function gameServer(io, thisServer, mastersList) {
             }
         });
         socket.on('disconnect', () => {
-            const timestamp = (store.getState() || { timestamp: 0 }).timestamp;
-            store.dispatch(actions_1.addToQueue(timestamp, actions_1.removeUnit(socket.id)));
+            log.info({ socketId: socket.id }, `Disconnect`);
+            globalSocketEvents.next(['disconnect', { socketId: socket.id }]);
+            const state = store.getState();
+            const socketId = socket.id;
+            if (state) {
+                const unitId = state.socketIdToUnitId[socket.id];
+                if (unitId) {
+                    rxjs_1.Observable.of(0)
+                        .delay(10000)
+                        .takeUntil(globalSocketEvents.filter((event) => event[0] === 'RECONNECT' && event[1].unitId === unitId))
+                        .subscribe(() => store.dispatch(actions_1.addToQueue(store.getState().timestamp, actions_1.removeUnit(socketId))));
+                }
+            }
         });
     });
     rxjs_1.Observable

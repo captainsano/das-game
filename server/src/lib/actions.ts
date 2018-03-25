@@ -15,7 +15,7 @@ export interface SpawnUnitAction extends GameAction {
     }
 }
 
-export function spawnUnit(socketId: string, type: 'KNIGHT' | 'DRAGON'): GameAction {
+export function spawnUnit(socketId: string, type: 'KNIGHT' | 'DRAGON'): SpawnUnitAction {
     return {
         type: 'SPAWN_UNIT',
         payload: { type, socketId }
@@ -29,7 +29,7 @@ export interface RemoveUnitAction extends GameAction {
     }
 }
 
-export function removeUnit(socketId: string): GameAction {
+export function removeUnit(socketId: string): RemoveUnitAction {
     return {
         type: 'REMOVE_UNIT',
         payload: { socketId }
@@ -60,7 +60,7 @@ export interface AttackUnitAction extends GameAction {
     }
 }
 
-export function attackUnit(unitId: number, target: UnitType = 'DRAGON') {
+export function attackUnit(unitId: number, target: UnitType = 'DRAGON'): AttackUnitAction {
     return {
         type: 'ATTACK_UNIT',
         payload: { unitId, target }
@@ -74,9 +74,9 @@ export interface HealUnitAction extends GameAction {
     }
 }
 
-export function healUnit(unitId: number) {
+export function healUnit(unitId: number): HealUnitAction {
     return {
-        type: 'ATTACK_UNIT',
+        type: 'HEAL_UNIT',
         payload: { unitId }
     }
 }

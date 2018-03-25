@@ -50,7 +50,7 @@ export function makeUnit(type: UnitType, id: number = -999): Unit {
                 id,
                 type: 'KNIGHT',
                 attack: getRandomInt(5, 10),
-                health,
+                health: health / 2,
                 maxHealth: health
             }
         }
