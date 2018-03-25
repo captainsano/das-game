@@ -1,8 +1,9 @@
 import { AnyAction } from 'redux'
 import { Unit, KnightUnit, DragonUnit, Board, BOARD_SIZE, makeUnit, createEmptyBoard, getRandomInt, findUnitInBoard, moveUnitOnBoard, getDistance } from './util'
-import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction, MoveUnitAction, AttackUnitAction, HealUnitAction } from './actions'
+import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction, MoveUnitAction, AttackUnitAction, HealUnitAction, SyncStateAction } from './actions'
 import { Logger } from './Logger';
 import { dissoc } from 'ramda'
+import { isMaster } from 'cluster';
 
 interface ActionHistory {
     timestamp: number,
@@ -13,6 +14,9 @@ interface ActionHistory {
 export interface GameState {
     nextId: number,
     timestamp: number,
+    connecting: boolean,
+    isMaster: boolean,
+    masterSocket: SocketIOClient.Socket | null,
     board: Board,
     executionQueue: GameAction[],
     forwardQueue: GameAction[],
@@ -21,8 +25,11 @@ export interface GameState {
 }
 
 export const INIT_STATE = {
+    timestamp: 0,
     nextId: 1,
-    timestamp: 1,
+    connecting: true,
+    isMaster: false,
+    masterSocket: null,
     board: createEmptyBoard() as Board,
     executionQueue: [] as GameAction[],
     forwardQueue: [] as GameAction[],
@@ -33,9 +40,15 @@ export const INIT_STATE = {
 const log = Logger.getInstance('reducer')
 
 export function stateReducer(state: GameState = INIT_STATE, action: GameAction | ExecutionAction): GameState {
-    // TODO: Handle timestamps
-    // TODO: Handle forwarding
     switch (action.type) {
+        case 'SET_SYNC_STATE': {
+           // TODO: Place items in execution queue/forward queue based on this
+           return {
+               ...state,
+               ...(action as SyncStateAction).payload,
+           }
+        }
+
         case 'ADD_TO_QUEUE': {
             // TODO: Decide to forward/exec queue
             const a = action as ExecutionAction

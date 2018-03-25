@@ -1,19 +1,20 @@
-import { Server } from 'socket.io';
-import { Logger } from "./Logger";
-import { values, find } from 'ramda'
-import { createStore, applyMiddleware } from 'redux';
-import { stateReducer, INIT_STATE, GameState } from './stateReducer';
-import { addToQueue, spawnUnit, removeUnit, drainExecuteQueue, attackUnit, healUnit, moveUnit } from './actions';
-import { createEpicMiddleware, combineEpics } from 'redux-observable';
-import epicFactory from './epic';
-import 'rxjs';
+import 'rxjs'
+import { Server } from 'socket.io'
+import * as SocketIOClient from 'socket.io-client'
+import { Logger } from './Logger'
+import { values, find, drop } from 'ramda'
+import { createStore, applyMiddleware } from 'redux'
+import { stateReducer, INIT_STATE, GameState } from './stateReducer'
+import { addToQueue, spawnUnit, removeUnit, drainExecuteQueue, attackUnit, healUnit, moveUnit, setSyncState } from './actions'
+import { createEpicMiddleware, combineEpics } from 'redux-observable'
+import epicFactory from './epic'
 import { Observable, Observer, BehaviorSubject } from 'rxjs'
-import { DRAGONS_COUNT } from './util';
+import { DRAGONS_COUNT } from './util'
 
-export default function gameServer(io: Server, thisServer: string, mastersList: string[]) {
+export default function gameServer(gameIo: Server, syncIo: Server, thisServer: string, mastersList: string[]) {
     const log = Logger.getInstance('GameServer')
 
-    const rootEpic = combineEpics(...epicFactory(io))
+    const rootEpic = combineEpics(...epicFactory(gameIo))
     const epicMiddleware = createEpicMiddleware(rootEpic)
 
     const store = createStore(stateReducer, INIT_STATE, applyMiddleware(epicMiddleware))
@@ -21,8 +22,8 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
     // Subject to capture all events occurring in all the sockets with a delay of 250ms
     const globalSocketEvents = new BehaviorSubject<[string, object]>(['', {}])
 
-    // Core socket handler
-    io.on('connection', (socket) => {
+    // Core socket handler for the games
+    gameIo.on('connection', (socket) => {
         log.info({socketId: socket.id}, `Connection`)
         globalSocketEvents.next(['connection', {socketId: socket.id}])
 
@@ -92,8 +93,10 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
         })
     })
 
+    // Game execution or forward to other servers
     Observable
         .interval(1000)
+        .filter(() => store.getState() !== null && !store.getState()!.connecting)
         .subscribe(() => {
             const state = store.getState()
             if (state != null && state.executionQueue.length > 0) {
@@ -102,7 +105,8 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
                 store.dispatch(drainExecuteQueue())
             }
         })
-
+    
+    // Broadcast game updates to clients, buffered by every 1second
     Observable.create((o: Observer<GameState>) => {
         store.subscribe(() => {
             const state = store.getState()
@@ -112,13 +116,14 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
     .bufferTime(1000)
     .subscribe((states: GameState[]) => { 
         if (states.length > 0) {
-            io.sockets.emit('STATE_UPDATE', {
+            gameIo.sockets.emit('STATE_UPDATE', {
                 timestamp: states[states.length - 1].timestamp,
                 board: states[states.length - 1].board
             })
         }
     })
 
+    // Dragon Spawn actions on game start
     Observable
         .interval(1000)
         .take(1)
@@ -130,4 +135,59 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
                 }
             }
         })
+
+    // --------------- MATINTAINING CONNECTION TO MASTER / BECOMING MASTER -----------------
+    const findMaster = function findMaster(thisProcess: string, mastersList: string[], retryCount = 1) {
+        if (mastersList.length === 0) {
+            log.fatal('Masters list is empty')
+            process.exit(-1)
+        } else if (thisProcess === mastersList[0]) {
+            log.info('Becoming Master')
+            store.dispatch(setSyncState(false, true))
+
+            syncIo.on('connection', (socket) => {
+                log.info('Got connection from another server')
+
+                socket.on('disconnect', () => {
+                    log.info('A slave server disconnected')
+                })
+            })
+        } else {
+            const nextMaster = mastersList[0]
+
+            log.info({master: nextMaster, attemp: retryCount},'Connecting to master')
+
+            // Attempt connection to a master
+            const io = SocketIOClient(`http://${nextMaster}`, { reconnection: false })
+            const connectionTimeout = setTimeout(() => {
+                if (io.connected) return;
+                if (retryCount < 3) {
+                    findMaster(thisProcess, mastersList, retryCount + 1)
+                } else {
+                    findMaster(thisProcess, drop(1, mastersList))
+                }
+            }, 2500)
+
+            io.on('connect', () => {
+                log.info({master: nextMaster}, 'Connection made to master')
+                store.dispatch(setSyncState(false, false, io))
+            })
+
+            io.on('disconnect', () => {
+                log.info({master: nextMaster}, 'Disconnected from master')
+                store.dispatch(setSyncState(true, false))
+
+                // Retry three times
+                setTimeout(() => {
+                    if (!io.connected && retryCount < 3) {
+                        findMaster(thisProcess, mastersList, retryCount + 1)
+                    } else {
+                        findMaster(thisProcess, drop(1, mastersList))
+                    }
+                }, 1000)
+            })
+        }
+    }
+
+    findMaster(thisServer, mastersList)
 }

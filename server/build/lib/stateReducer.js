@@ -4,8 +4,9 @@ const util_1 = require("./util");
 const Logger_1 = require("./Logger");
 const ramda_1 = require("ramda");
 exports.INIT_STATE = {
+    timestamp: 0,
     nextId: 1,
-    timestamp: 1,
+    connecting: true,
     board: util_1.createEmptyBoard(),
     executionQueue: [],
     forwardQueue: [],
@@ -14,9 +15,11 @@ exports.INIT_STATE = {
 };
 const log = Logger_1.Logger.getInstance('reducer');
 function stateReducer(state = exports.INIT_STATE, action) {
-    // TODO: Handle timestamps
-    // TODO: Handle forwarding
     switch (action.type) {
+        case 'SET_SYNC_STATE': {
+            // TODO: Place items in execution queue/forward queue based on this
+            return Object.assign({}, state, action.payload);
+        }
         case 'ADD_TO_QUEUE': {
             // TODO: Decide to forward/exec queue
             const a = action;

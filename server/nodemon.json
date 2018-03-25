@@ -5,5 +5,5 @@
   "env": {
     "NODE_ENV": "development"
   },
-  "exec": "SERVER_PORT=8000 node build/index.js -t localhost:8000 -m localhost:8000,localhost:8001,localhost:8002,localhost:8003,localhost:8004"
+  "exec": "SERVER_PORT=8000 SYNC_PORT=5000 node build/index.js -t localhost:5000 -m localhost:5000,localhost:5001,localhost:5002,localhost:5003,localhost:5004"
 }

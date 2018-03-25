@@ -86,8 +86,23 @@ export function healUnit(unitId: number): HealUnitAction {
  */
 export interface ExecutionAction extends Action {
     timestamp?: number,
-    type: 'ADD_TO_QUEUE' | 'DRAIN_EXECUTE_QUEUE',
+    type: 'ADD_TO_QUEUE' | 'DRAIN_EXECUTE_QUEUE' | 'SET_SYNC_STATE',
     action?: GameAction,
+}
+
+export interface SyncStateAction extends ExecutionAction {
+    payload: {
+        connecting: boolean,
+        isMaster: boolean,
+        masterSocket: SocketIOClient.Socket | null,
+    }
+}
+
+export function setSyncState(connecting: boolean, isMaster: boolean, masterSocket: SocketIOClient.Socket | null = null): SyncStateAction {
+    return {
+        type: 'SET_SYNC_STATE',
+        payload: { connecting, isMaster, masterSocket }
+    }
 }
 
 export function addToQueue(timestamp: number, action: GameAction): ExecutionAction {

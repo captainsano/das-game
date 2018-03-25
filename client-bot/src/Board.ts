@@ -6,12 +6,16 @@ export interface Unit {
     type: string;
 }
 
-export interface PlayerUnit extends Unit {
-    type: 'player';
+export interface EmptyUnit extends Unit {
+    type: 'EMPTY'
+}
+
+export interface KnightUnit extends Unit {
+    type: 'KNIGHT'
 }
 
 export interface DragonUnit extends Unit {
-    type: 'dragon';
+    type: 'DRAGON';
 }
 
-export type Board = (Unit | null)[][];
+export type Board = Unit[][];

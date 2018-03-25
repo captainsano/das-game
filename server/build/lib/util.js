@@ -21,17 +21,17 @@ function makeUnit(type, id = -999) {
             return {
                 id,
                 type: 'KNIGHT',
-                attack: getRandomInt(5, 10),
-                health: health / 2,
+                attack: getRandomInt(1, 10),
+                health,
                 maxHealth: health
             };
         }
         case 'DRAGON': {
-            const health = getRandomInt(25, 50);
+            const health = getRandomInt(50, 100);
             return {
                 id,
                 type: 'DRAGON',
-                attack: getRandomInt(10, 20),
+                attack: getRandomInt(5, 20),
                 health,
                 maxHealth: health
             };

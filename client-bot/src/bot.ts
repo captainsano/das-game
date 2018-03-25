@@ -1,6 +1,6 @@
 // Client bot script
 const io = require('socket.io-client');
-import {Board, PlayerUnit} from './Board';
+import {Board, KnightUnit} from './Board';
 import {Observable} from 'rxjs';
 
 export function getRandomInt(min: number, max: number): number {
@@ -35,7 +35,7 @@ const connect = function() {
         state.connected = true;
 
         if (state.unitId === -1) {
-            socket.emit('SPAWN', {}, (id: number) => {
+            socket.emit('SPAWN_UNIT', {}, (id: number) => {
                 state.unitId = id;
                 console.log('---> Unit id: ', id);
                 socket.emit('MESSAGE', {unitId: state.unitId, action: 'PING'})
@@ -83,7 +83,7 @@ const getUnitLocation = function getUnitLocation(): [number, number] | null {
 
     for (let i = 0; i < state.board.length; i++) {
         for (let j = 0; j < state.board.length; j++) {
-            if (state.board[i][j] != null && state.board[i][j]!.id === state.unitId) {
+            if (state.board[i][j]!.id === state.unitId) {
                 return [i, j];
             }
         }
@@ -103,8 +103,8 @@ const shouldAttack = function shouldAttack(): boolean {
 
     for (let i = 0; i < state.board.length; i++) {
         for (let j = 0; j < state.board.length; j++) {
-            if (state.board[i][j] != null && state.board[i][j]!.id === state.unitId) {
-                const unit = state.board[i][j] as PlayerUnit
+            if (state.board[i][j].id === state.unitId) {
+                const unit = state.board[i][j] as KnightUnit
                 return unit.health / unit.maxHealth > 0.5
             }
         }
@@ -113,15 +113,15 @@ const shouldAttack = function shouldAttack(): boolean {
     return false;
 }
 
-const getNearestUnit = function getNearestUnit(type: 'dragon' | 'player'): [number, number] | null {
+const getNearestUnit = function getNearestUnit(type: 'DRAGON' | 'KNIGHT'): [number, number] | null {
     const location = getUnitLocation();
 
     if (location != null && state.board != null) {
         for (let i = 0; i < state.board.length; i++) {
             for (let j = 0; j < state.board.length; j++) {
-                if (state.board[i][j] != null && state.board[i][j]!.type === type) {
-                    if (type === 'dragon' && getDistance(location, [i, j]) <= 2) return [i, j]
-                    if (type === 'player' && getDistance(location, [i, j]) <= 5) return [i, j]
+                if (state.board[i][j].type === type) {
+                    if (type === 'DRAGON' && getDistance(location, [i, j]) <= 2) return [i, j]
+                    if (type === 'KNIGHT' && getDistance(location, [i, j]) <= 5) return [i, j]
                 }
             }
         }
@@ -139,7 +139,7 @@ const getDragonsCount = function getDragonsCount(): number | null {
 
     for (let i = 0; i < state.board.length; i++) {
         for (let j = 0; j < state.board.length; j++) {
-            if (state.board[i][j] != null && state.board[i][j]!.type === 'dragon') {
+            if (state.board[i][j].type === 'DRAGON') {
                 dragonsCount += 1;
             }
         }
@@ -178,7 +178,7 @@ Observable
         // Bot Logic!
         let action = null
         if (shouldAttack()) {
-            const nearestDragonLocation = getNearestUnit('dragon')
+            const nearestDragonLocation = getNearestUnit('DRAGON')
             if (nearestDragonLocation) {
                 action = actions[0]
             } else {
@@ -186,7 +186,7 @@ Observable
                 action = actions[getRandomInt(2, actions.length - 1)]
             }
         } else {
-            const nearestPlayerLocation = getNearestUnit('player')
+            const nearestPlayerLocation = getNearestUnit('KNIGHT')
             if (nearestPlayerLocation && state.board![nearestPlayerLocation[0]][nearestPlayerLocation[1]]!.health < 7) {
                 // If the poor guy's health is < 50% then heal
                 action = actions[1]

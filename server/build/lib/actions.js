@@ -35,6 +35,13 @@ function healUnit(unitId) {
     };
 }
 exports.healUnit = healUnit;
+function setSyncState(connecting) {
+    return {
+        type: 'SET_SYNC_STATE',
+        payload: { connecting }
+    };
+}
+exports.setSyncState = setSyncState;
 function addToQueue(timestamp, action) {
     return {
         timestamp,
