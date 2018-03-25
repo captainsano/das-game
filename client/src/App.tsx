@@ -128,7 +128,7 @@ class App extends React.Component {
             let dragonsCount = 0;
             for (let i = 0; i < (this.state.board! as Board).length; i++) {
                 for (let j = 0; j < (this.state.board! as Board).length; j++) {
-                    if (this.state.board![i][j] != null && this.state.board![i][j].type === 'dragon') {
+                    if (this.state.board![i][j].type === 'DRAGON') {
                         dragonsCount += 1
                     }
                 }

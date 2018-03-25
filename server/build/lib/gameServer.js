@@ -8,6 +8,7 @@ const redux_observable_1 = require("redux-observable");
 const epic_1 = require("./epic");
 require("rxjs");
 const rxjs_1 = require("rxjs");
+const util_1 = require("./util");
 function gameServer(io, thisServer, mastersList) {
     const log = Logger_1.Logger.getInstance('GameServer');
     const rootEpic = redux_observable_1.combineEpics(...epic_1.default(io));
@@ -71,6 +72,17 @@ function gameServer(io, thisServer, mastersList) {
             timestamp: state.timestamp,
             board: state.board
         });
+    });
+    rxjs_1.Observable
+        .interval(1000)
+        .take(1)
+        .subscribe(() => {
+        const state = store.getState();
+        if (state != null) {
+            for (let i = 0; i < util_1.DRAGONS_COUNT; i++) {
+                store.dispatch(actions_1.addToQueue(state.timestamp, actions_1.spawnUnit(`dragon-${i}`, 'DRAGON')));
+            }
+        }
     });
 }
 exports.default = gameServer;

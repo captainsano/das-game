@@ -7,6 +7,7 @@ import { createEpicMiddleware, combineEpics } from 'redux-observable';
 import epicFactory from './epic';
 import 'rxjs';
 import { Observable, Observer } from 'rxjs'
+import { DRAGONS_COUNT } from './util';
 
 export default function gameServer(io: Server, thisServer: string, mastersList: string[]) {
     const log = Logger.getInstance('GameServer')
@@ -78,4 +79,16 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
             board: state.board
         })
     })
+
+    Observable
+        .interval(1000)
+        .take(1)
+        .subscribe(() => {
+            const state = store.getState()
+            if (state != null) {
+                for (let i = 0; i < DRAGONS_COUNT; i++) {
+                    store.dispatch(addToQueue(state.timestamp, spawnUnit(`dragon-${i}`, 'DRAGON')))
+                }
+            }
+        })
 }
