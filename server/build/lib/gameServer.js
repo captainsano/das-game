@@ -66,12 +66,14 @@ function gameServer(io, thisServer, mastersList) {
             }
         });
     })
-        .distinctUntilChanged()
-        .subscribe((state) => {
-        io.sockets.emit('STATE_UPDATE', {
-            timestamp: state.timestamp,
-            board: state.board
-        });
+        .bufferTime(1000)
+        .subscribe((states) => {
+        if (states.length > 0) {
+            io.sockets.emit('STATE_UPDATE', {
+                timestamp: states[states.length - 1].timestamp,
+                board: states[states.length - 1].board
+            });
+        }
     });
     rxjs_1.Observable
         .interval(1000)

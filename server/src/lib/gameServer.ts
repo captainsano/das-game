@@ -72,12 +72,14 @@ export default function gameServer(io: Server, thisServer: string, mastersList: 
             if (state != null) { o.next(state) }
         })
     })
-    .distinctUntilChanged()
-    .subscribe((state) => { 
-        io.sockets.emit('STATE_UPDATE', {
-            timestamp: state.timestamp,
-            board: state.board
-        })
+    .bufferTime(1000)
+    .subscribe((states: GameState[]) => { 
+        if (states.length > 0) {
+            io.sockets.emit('STATE_UPDATE', {
+                timestamp: states[states.length - 1].timestamp,
+                board: states[states.length - 1].board
+            })
+        }
     })
 
     Observable
