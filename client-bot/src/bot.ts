@@ -56,6 +56,10 @@ const connect = function() {
             state.timestamp = timestamp;
         });
 
+        socket.on('ASSIGN_UNIT_ID', (unitId: number) => {
+            state.unitId = unitId
+        })
+
         socket.on('disconnect', () => {
             console.log('disconnected');
             state.connected = false;

@@ -11,6 +11,8 @@ const servers = [
     'localhost:8000',
     'localhost:8001',
     'localhost:8002',
+    'localhost:8003',
+    'localhost:8004',
 ];
 let randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;
 let socket = io.connect(randomServer, { reconnection: false });
@@ -28,7 +30,7 @@ const connect = function () {
         console.log('---> Connected to ', randomServer);
         state.connected = true;
         if (state.unitId === -1) {
-            socket.emit('SPAWN', {}, (id) => {
+            socket.emit('SPAWN_UNIT', {}, (id) => {
                 state.unitId = id;
                 console.log('---> Unit id: ', id);
                 socket.emit('MESSAGE', { unitId: state.unitId, action: 'PING' });
@@ -72,7 +74,7 @@ const getUnitLocation = function getUnitLocation() {
     }
     for (let i = 0; i < state.board.length; i++) {
         for (let j = 0; j < state.board.length; j++) {
-            if (state.board[i][j] != null && state.board[i][j].id === state.unitId) {
+            if (state.board[i][j].id === state.unitId) {
                 return [i, j];
             }
         }
@@ -88,7 +90,7 @@ const shouldAttack = function shouldAttack() {
     }
     for (let i = 0; i < state.board.length; i++) {
         for (let j = 0; j < state.board.length; j++) {
-            if (state.board[i][j] != null && state.board[i][j].id === state.unitId) {
+            if (state.board[i][j].id === state.unitId) {
                 const unit = state.board[i][j];
                 return unit.health / unit.maxHealth > 0.5;
             }
@@ -101,10 +103,10 @@ const getNearestUnit = function getNearestUnit(type) {
     if (location != null && state.board != null) {
         for (let i = 0; i < state.board.length; i++) {
             for (let j = 0; j < state.board.length; j++) {
-                if (state.board[i][j] != null && state.board[i][j].type === type) {
-                    if (type === 'dragon' && getDistance(location, [i, j]) <= 2)
+                if (state.board[i][j].type === type) {
+                    if (type === 'DRAGON' && getDistance(location, [i, j]) <= 2)
                         return [i, j];
-                    if (type === 'player' && getDistance(location, [i, j]) <= 5)
+                    if (type === 'KNIGHT' && getDistance(location, [i, j]) <= 5)
                         return [i, j];
                 }
             }
@@ -119,7 +121,7 @@ const getDragonsCount = function getDragonsCount() {
     let dragonsCount = 0;
     for (let i = 0; i < state.board.length; i++) {
         for (let j = 0; j < state.board.length; j++) {
-            if (state.board[i][j] != null && state.board[i][j].type === 'dragon') {
+            if (state.board[i][j].type === 'DRAGON') {
                 dragonsCount += 1;
             }
         }
@@ -130,8 +132,10 @@ const getDragonsCount = function getDragonsCount() {
 rxjs_1.Observable
     .interval(1500)
     .filter(() => state.connected)
+    .filter(() => state.unitId !== -1)
     .subscribe(() => {
     if (!isAlive()) {
+        console.log('---> Am dead!');
         process.exit(0);
     }
     const dragonsCount = getDragonsCount();
@@ -148,26 +152,31 @@ rxjs_1.Observable
         { unitId: state.unitId, action: 'DOWN', timestamp: state.timestamp },
     ];
     // Bot Logic!
+    let action = null;
     if (shouldAttack()) {
-        const nearestDragonLocation = getNearestUnit('dragon');
+        const nearestDragonLocation = getNearestUnit('DRAGON');
         if (nearestDragonLocation) {
-            socket.emit('MESSAGE', actions[0]);
+            action = actions[0];
         }
         else {
             // Move randomly
-            socket.emit('MESSAGE', actions[getRandomInt(2, actions.length - 1)]);
+            action = actions[getRandomInt(2, actions.length - 1)];
         }
     }
     else {
-        const nearestPlayerLocation = getNearestUnit('player');
+        const nearestPlayerLocation = getNearestUnit('KNIGHT');
         if (nearestPlayerLocation && state.board[nearestPlayerLocation[0]][nearestPlayerLocation[1]].health < 7) {
             // If the poor guy's health is < 50% then heal
-            socket.emit('MESSAGE', actions[1]);
+            action = actions[1];
         }
         else {
             // Move randomly
-            socket.emit('MESSAGE', actions[getRandomInt(2, actions.length - 1)]);
+            action = actions[getRandomInt(2, actions.length - 1)];
         }
+    }
+    if (action) {
+        // console.log('---> ACTION: ', action)
+        socket.emit('MESSAGE', action);
     }
 });
 // Event loop wait
