@@ -11,6 +11,7 @@ const redux_observable_1 = require("redux-observable");
 const epic_1 = require("./epic");
 const rxjs_1 = require("rxjs");
 const util_1 = require("./util");
+const dragonsAttack_1 = require("./dragonsAttack");
 function gameServer(gameIo, syncIo, thisServer, mastersList) {
     const log = Logger_1.Logger.getInstance('GameServer');
     const rootEpic = redux_observable_1.combineEpics(...epic_1.default(gameIo));
@@ -86,6 +87,12 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
     rxjs_1.Observable
         .interval(1000)
         .filter(() => store.getState() !== null && !store.getState().connecting)
+        .do((val) => {
+        if ((val * 1000) % 5000 === 0) {
+            log.info('Dragons attack');
+            dragonsAttack_1.default(store);
+        }
+    })
         .subscribe(() => {
         const state = store.getState();
         if (state != null && state.executionQueue.length > 0) {
@@ -132,9 +139,20 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
         }
         else if (thisProcess === mastersList[0]) {
             log.info('Becoming Master');
-            store.dispatch(actions_1.setSyncState(false));
+            store.dispatch(actions_1.setSyncState(false, true));
             syncIo.on('connection', (socket) => {
                 log.info('Got connection from another server');
+                socket.on('FORWARD_SPAWN_UNIT', (socketId) => {
+                    const timestamp = (store.getState() || { timestamp: 0 }).timestamp;
+                    store.dispatch(actions_1.addToQueue(timestamp, actions_1.spawnUnit(socketId, 'KNIGHT')));
+                });
+                socket.on('FORWARD_MESSAGE', (timestamp, gameAction) => {
+                    store.dispatch(actions_1.addToQueue(timestamp, gameAction));
+                });
+                socket.on('FORWARD_REMOVE_UNIT', (socketId) => {
+                    const timestamp = (store.getState() || { timestamp: 0 }).timestamp;
+                    store.dispatch(actions_1.removeUnit(socketId));
+                });
                 socket.on('disconnect', () => {
                     log.info('A slave server disconnected');
                 });
@@ -157,11 +175,11 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
             }, 2500);
             io.on('connect', () => {
                 log.info({ master: nextMaster }, 'Connection made to master');
-                store.dispatch(actions_1.setSyncState(false));
+                store.dispatch(actions_1.setSyncState(false, false, io));
             });
             io.on('disconnect', () => {
                 log.info({ master: nextMaster }, 'Disconnected from master');
-                store.dispatch(actions_1.setSyncState(true));
+                store.dispatch(actions_1.setSyncState(true, false));
                 // Retry three times
                 setTimeout(() => {
                     if (!io.connected && retryCount < 3) {

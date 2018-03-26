@@ -7,6 +7,8 @@ exports.INIT_STATE = {
     timestamp: 0,
     nextId: 1,
     connecting: true,
+    isMaster: false,
+    masterSocket: null,
     board: util_1.createEmptyBoard(),
     executionQueue: [],
     forwardQueue: [],
@@ -61,15 +63,28 @@ function stateReducer(state = exports.INIT_STATE, action) {
         }
         case 'ATTACK_UNIT': {
             const unitId = action.payload.unitId;
+            const target = action.payload.target;
             // Find nearest dragon unit and reduce its health
             const location = util_1.findUnitInBoard(state.board, unitId);
             if (location != null) {
                 for (let i = 0; i < util_1.BOARD_SIZE; i++) {
                     for (let j = 0; j < util_1.BOARD_SIZE; j++) {
-                        if (state.board[i][j].type === 'DRAGON' && util_1.getDistance(location, [i, j]) <= 2) {
+                        if (state.board[i][j].type === target && util_1.getDistance(location, [i, j]) <= 2) {
                             const updatedHealth = state.board[i][j].health - state.board[location[0]][location[1]].attack;
+                            const affectedUnit = state.board[i][j];
                             state.board[i][j] = updatedHealth <= 0 ? util_1.makeUnit('EMPTY') : Object.assign({}, state.board[i][j], { health: updatedHealth });
-                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board] });
+                            // If the unit's health is 0 then remove the unit from sockets as well (equal to disconnection)
+                            const newSocketIdToUnitId = (() => {
+                                if (updatedHealth <= 0) {
+                                    for (let k in state.socketIdToUnitId) {
+                                        if (state.socketIdToUnitId[k] === affectedUnit.id) {
+                                            return ramda_1.dissoc(k, state.socketIdToUnitId);
+                                        }
+                                    }
+                                }
+                                return state.socketIdToUnitId;
+                            })();
+                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: Object.assign({}, newSocketIdToUnitId) });
                         }
                     }
                 }

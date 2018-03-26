@@ -35,10 +35,10 @@ function healUnit(unitId) {
     };
 }
 exports.healUnit = healUnit;
-function setSyncState(connecting) {
+function setSyncState(connecting, isMaster, masterSocket = null) {
     return {
         type: 'SET_SYNC_STATE',
-        payload: { connecting }
+        payload: { connecting, isMaster, masterSocket }
     };
 }
 exports.setSyncState = setSyncState;

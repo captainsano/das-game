@@ -125,19 +125,36 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
 
         case 'ATTACK_UNIT': {
             const unitId = (action as AttackUnitAction).payload.unitId
+            const target = (action as AttackUnitAction).payload.target
             
             // Find nearest dragon unit and reduce its health
             const location = findUnitInBoard(state.board, unitId)
             if (location != null) {
                 for (let i = 0; i < BOARD_SIZE; i++) {
                     for (let j = 0; j < BOARD_SIZE; j++) {
-                        if (state.board[i][j].type === 'DRAGON' && getDistance(location, [i, j]) <= 2) {
+                        if (state.board[i][j].type === target && getDistance(location, [i, j]) <= 2) {
                             const updatedHealth = state.board[i][j].health - state.board[location[0]][location[1]].attack
+                            const affectedUnit = state.board[i][j]
                             state.board[i][j] = updatedHealth <= 0 ? makeUnit('EMPTY') : { ...state.board[i][j], health: updatedHealth }
+                            
+                            // If the unit's health is 0 then remove the unit from sockets as well (equal to disconnection)
+                            const newSocketIdToUnitId = (() => {
+                                if (updatedHealth <= 0) {
+                                    for (let k in state.socketIdToUnitId) {
+                                        if (state.socketIdToUnitId[k] === affectedUnit.id) {
+                                            return dissoc(k, state.socketIdToUnitId)
+                                        }
+                                    }
+                                }
+
+                                return state.socketIdToUnitId
+                            })()
+
                             return {
                                 ...state,
                                 timestamp: state.timestamp + 1,
-                                board: [...state.board]
+                                board: [...state.board],
+                                socketIdToUnitId: {...newSocketIdToUnitId}
                             }
                         }
                     }

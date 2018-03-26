@@ -5,11 +5,12 @@ import { Logger } from './Logger'
 import { values, find, drop } from 'ramda'
 import { createStore, applyMiddleware } from 'redux'
 import { stateReducer, INIT_STATE, GameState } from './stateReducer'
-import { addToQueue, spawnUnit, removeUnit, drainExecuteQueue, attackUnit, healUnit, moveUnit, setSyncState } from './actions'
+import { addToQueue, spawnUnit, removeUnit, drainExecuteQueue, attackUnit, healUnit, moveUnit, setSyncState, ExecutionAction, GameAction } from './actions'
 import { createEpicMiddleware, combineEpics } from 'redux-observable'
 import epicFactory from './epic'
 import { Observable, Observer, BehaviorSubject } from 'rxjs'
 import { DRAGONS_COUNT } from './util'
+import dragonsAttack from './dragonsAttack';
 
 export default function gameServer(gameIo: Server, syncIo: Server, thisServer: string, mastersList: string[]) {
     const log = Logger.getInstance('GameServer')
@@ -97,6 +98,12 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
     Observable
         .interval(1000)
         .filter(() => store.getState() !== null && !store.getState()!.connecting)
+        .do((val) => { 
+            if ((val * 1000) % 5000 === 0)  {
+                log.info('Dragons attack')
+                dragonsAttack(store) 
+            }
+        })
         .subscribe(() => {
             const state = store.getState()
             if (state != null && state.executionQueue.length > 0) {
@@ -148,6 +155,20 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
             syncIo.on('connection', (socket) => {
                 log.info('Got connection from another server')
 
+                socket.on('FORWARD_SPAWN_UNIT', (socketId) => {
+                    const timestamp = (store.getState() || {timestamp: 0}).timestamp
+                    store.dispatch(addToQueue(timestamp, spawnUnit(socketId, 'KNIGHT')))
+                })
+
+                socket.on('FORWARD_MESSAGE', (timestamp: number, gameAction: GameAction) => {
+                    store.dispatch(addToQueue(timestamp, gameAction))
+                })
+
+                socket.on('FORWARD_REMOVE_UNIT', (socketId) => {
+                    const timestamp = (store.getState() || {timestamp: 0}).timestamp
+                    store.dispatch(removeUnit(socketId))
+                })
+
                 socket.on('disconnect', () => {
                     log.info('A slave server disconnected')
                 })
@@ -155,7 +176,7 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
         } else {
             const nextMaster = mastersList[0]
 
-            log.info({master: nextMaster, attemp: retryCount},'Connecting to master')
+            log.info({master: nextMaster, attemp: retryCount}, 'Connecting to master')
 
             // Attempt connection to a master
             const io = SocketIOClient(`http://${nextMaster}`, { reconnection: false })
