@@ -9,7 +9,7 @@ import { Server } from 'socket.io';
 
 const log = Logger.getInstance('LoggerEpic')
 
-export default function epicFactory(io: Server) {
+export default function epicFactory(gameIo: Server, syncIo: Server) {
     return [
         function loggerEpic(action$: ActionsObservable<GameAction | ExecutionAction>, store: Store<GameState>): Observable<GameAction | ExecutionAction> {
             return action$
@@ -20,9 +20,10 @@ export default function epicFactory(io: Server) {
             return action$.ofType('SPAWN_UNIT')
                 .do((action: SpawnUnitAction) => {
                     const socketId = action.payload.socketId
-                    if (store.getState().socketIdToUnitId[socketId] && io.sockets.connected[socketId]) {
-                        io.sockets.connected[socketId].emit('ASSIGN_UNIT_ID', store.getState().socketIdToUnitId[socketId])
+                    if (store.getState().socketIdToUnitId[socketId] && gameIo.sockets.connected[socketId]) {
+                        gameIo.sockets.connected[socketId].emit('ASSIGN_UNIT_ID', store.getState().socketIdToUnitId[socketId])
                     }
+                    syncIo.sockets.emit('ASSIGN_UNIT_ID', { socketId, unitId: store.getState().socketIdToUnitId[socketId] })
                 })
                 .flatMapTo(Observable.empty())
         }

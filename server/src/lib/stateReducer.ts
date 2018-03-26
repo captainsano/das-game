@@ -1,6 +1,6 @@
 import { AnyAction } from 'redux'
 import { Unit, KnightUnit, DragonUnit, Board, BOARD_SIZE, makeUnit, createEmptyBoard, getRandomInt, findUnitInBoard, moveUnitOnBoard, getDistance } from './util'
-import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction, MoveUnitAction, AttackUnitAction, HealUnitAction, SyncStateAction } from './actions'
+import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction, MoveUnitAction, AttackUnitAction, HealUnitAction, SyncStateAction, MasterServerSyncAction } from './actions'
 import { Logger } from './Logger';
 import { dissoc } from 'ramda'
 import { isMaster } from 'cluster';
@@ -41,16 +41,28 @@ const log = Logger.getInstance('reducer')
 
 export function stateReducer(state: GameState = INIT_STATE, action: GameAction | ExecutionAction): GameState {
     switch (action.type) {
+        case 'MASTER_SERVER_SYNC': {
+            return {
+                ...state,
+                ...(action as MasterServerSyncAction).payload,
+                socketIdToUnitId: {
+                    ...(action as MasterServerSyncAction).payload.socketIdToUnitId,
+                    ...state.socketIdToUnitId
+                }
+            }
+        }
+
         case 'SET_SYNC_STATE': {
            // TODO: Place items in execution queue/forward queue based on this
            return {
                ...state,
                ...(action as SyncStateAction).payload,
+               executionQueue: [...((action as SyncStateAction).payload.isMaster ? [...state.executionQueue, ...state.forwardQueue] : [])],
+               forwardQueue: [...((action as SyncStateAction).payload.isMaster ? [] : [...state.executionQueue, ...state.forwardQueue])]
            }
         }
 
         case 'ADD_TO_QUEUE': {
-            // TODO: Decide to forward/exec queue
             const a = action as ExecutionAction
             const executionItem = {...a.action, timestamp: a.timestamp}
             return {
@@ -59,11 +71,26 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
             }
         }
 
+        case 'ADD_TO_FORWARD_QUEUE': {
+            const a = action as ExecutionAction
+            const forwardItem = {...a.action, timestamp: a.timestamp}
+            return {
+                ...state,
+                forwardQueue: [ ...state.forwardQueue, forwardItem as GameAction ],
+            }
+        }
+
         case 'DRAIN_EXECUTE_QUEUE': {
-            // TODO: Handle timestamp
             return {
                 ...state,
                 executionQueue: [],
+            }
+        }
+
+        case 'DRAIN_FORWARD_QUEUE': {
+            return {
+                ...state,
+                forwardQueue: [],
             }
         }
 

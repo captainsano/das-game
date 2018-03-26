@@ -50,9 +50,34 @@ function addToQueue(timestamp, action) {
     };
 }
 exports.addToQueue = addToQueue;
+function addToForwardQueue(timestamp, action) {
+    return {
+        timestamp,
+        type: 'ADD_TO_FORWARD_QUEUE',
+        action,
+    };
+}
+exports.addToForwardQueue = addToForwardQueue;
 function drainExecuteQueue() {
     return {
         type: 'DRAIN_EXECUTE_QUEUE',
     };
 }
 exports.drainExecuteQueue = drainExecuteQueue;
+function drainForwardQueue() {
+    return {
+        type: 'DRAIN_FORWARD_QUEUE',
+    };
+}
+exports.drainForwardQueue = drainForwardQueue;
+function masterServerSync(timestamp, board, socketIdToUnitId) {
+    return {
+        type: 'MASTER_SERVER_SYNC',
+        payload: {
+            timestamp,
+            board,
+            socketIdToUnitId,
+        }
+    };
+}
+exports.masterServerSync = masterServerSync;

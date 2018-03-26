@@ -1,11 +1,11 @@
 import 'rxjs'
-import { Server } from 'socket.io'
+import { Server, Socket } from 'socket.io'
 import * as SocketIOClient from 'socket.io-client'
 import { Logger } from './Logger'
 import { values, find, drop } from 'ramda'
 import { createStore, applyMiddleware } from 'redux'
 import { stateReducer, INIT_STATE, GameState } from './stateReducer'
-import { addToQueue, spawnUnit, removeUnit, drainExecuteQueue, attackUnit, healUnit, moveUnit, setSyncState, ExecutionAction, GameAction } from './actions'
+import { addToQueue, spawnUnit, removeUnit, drainExecuteQueue, attackUnit, healUnit, moveUnit, setSyncState, ExecutionAction, GameAction, addToForwardQueue, drainForwardQueue, masterServerSync } from './actions'
 import { createEpicMiddleware, combineEpics } from 'redux-observable'
 import epicFactory from './epic'
 import { Observable, Observer, BehaviorSubject } from 'rxjs'
@@ -15,7 +15,7 @@ import dragonsAttack from './dragonsAttack';
 export default function gameServer(gameIo: Server, syncIo: Server, thisServer: string, mastersList: string[]) {
     const log = Logger.getInstance('GameServer')
 
-    const rootEpic = combineEpics(...epicFactory(gameIo))
+    const rootEpic = combineEpics(...epicFactory(gameIo, syncIo))
     const epicMiddleware = createEpicMiddleware(rootEpic)
 
     const store = createStore(stateReducer, INIT_STATE, applyMiddleware(epicMiddleware))
@@ -94,10 +94,11 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
         })
     })
 
-    // Game execution or forward to other servers
+    // Game execution and forward queue management
     Observable
         .interval(1000)
         .filter(() => store.getState() !== null && !store.getState()!.connecting)
+        .filter(() => store.getState() !== null && store.getState()!.isMaster)
         .do((val) => { 
             if ((val * 1000) % 5000 === 0)  {
                 log.info('Dragons attack')
@@ -107,9 +108,31 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
         .subscribe(() => {
             const state = store.getState()
             if (state != null && state.executionQueue.length > 0) {
-                // TODO: Handle out of order timestamps and replays
-                state.executionQueue.forEach((a) => store.dispatch(a))
-                store.dispatch(drainExecuteQueue())
+                if (state.isMaster) {
+                    // TODO: Handle out of order timestamps and replays on execution
+                    state.executionQueue.forEach((a) => store.dispatch(a))
+                    store.dispatch(drainExecuteQueue())
+                } else {
+                    state.executionQueue.forEach((a: GameAction) => store.dispatch(addToForwardQueue(a.timestamp!, a)))
+                    store.dispatch(drainExecuteQueue())
+                }
+            }
+        })
+
+    // Forward execution queue to master server
+    Observable
+        .interval(1000)
+        .filter(() => store.getState() !== null && !store.getState()!.connecting)
+        .filter(() => store.getState() !== null && !store.getState()!.isMaster && store.getState()!.masterSocket != null)
+        .subscribe(() => { 
+            const state = store.getState()
+            if (state != null && state.forwardQueue.length > 0) {
+                // TODO: Handle special actions such as forward
+                state.forwardQueue.forEach((a: GameAction) => {
+                    log.info({timestamp: a.timestamp, action: a }, 'Forwarding')
+                    state.masterSocket!.emit('FORWARD', { timestamp: a.timestamp, action: a })
+                })
+                store.dispatch(drainForwardQueue())
             }
         })
     
@@ -121,7 +144,7 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
         })
     })
     .bufferTime(1000)
-    .subscribe((states: GameState[]) => { 
+    .do((states: GameState[]) => { 
         if (states.length > 0) {
             gameIo.sockets.emit('STATE_UPDATE', {
                 timestamp: states[states.length - 1].timestamp,
@@ -129,11 +152,24 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
             })
         }
     })
+    .do((states: GameState[]) => {
+        if (states.length > 0) {
+            syncIo.sockets.emit('SYNC', {
+                timestamp: states[states.length - 1].timestamp,
+                board: states[states.length - 1].board,
+                socketIdToUnitId: states[states.length - 1].socketIdToUnitId
+            })
+        }
+    })
+    .subscribe()
 
     // Dragon Spawn actions on game start
     Observable
         .interval(1000)
+        .delay(2500)
         .take(1)
+        .filter(() => store.getState() !== null && !store.getState()!.connecting)
+        .filter(() => store.getState() !== null && store.getState()!.isMaster)
         .subscribe(() => {
             const state = store.getState()
             if (state != null) {
@@ -155,18 +191,9 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
             syncIo.on('connection', (socket) => {
                 log.info('Got connection from another server')
 
-                socket.on('FORWARD_SPAWN_UNIT', (socketId) => {
-                    const timestamp = (store.getState() || {timestamp: 0}).timestamp
-                    store.dispatch(addToQueue(timestamp, spawnUnit(socketId, 'KNIGHT')))
-                })
-
-                socket.on('FORWARD_MESSAGE', (timestamp: number, gameAction: GameAction) => {
-                    store.dispatch(addToQueue(timestamp, gameAction))
-                })
-
-                socket.on('FORWARD_REMOVE_UNIT', (socketId) => {
-                    const timestamp = (store.getState() || {timestamp: 0}).timestamp
-                    store.dispatch(removeUnit(socketId))
+                socket.on('FORWARD', ({ timestamp, gameAction }) => {
+                    if (!timestamp || !gameAction) { }
+                    else store.dispatch(addToQueue(timestamp, gameAction))
                 })
 
                 socket.on('disconnect', () => {
@@ -192,6 +219,16 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
             io.on('connect', () => {
                 log.info({master: nextMaster}, 'Connection made to master')
                 store.dispatch(setSyncState(false, false, io))
+
+                io.on('SYNC', ({ timestamp, board, socketIdToUnitId }) => {
+                    store.dispatch(masterServerSync(timestamp, board, socketIdToUnitId))
+                })
+
+                io.on('ASSIGN_UNIT_ID', ({ socketId, unitId }) => {
+                    if (gameIo.sockets.connected[socketId]) {
+                        gameIo.sockets.connected[socketId].emit('ASSIGN_UNIT_ID', unitId)
+                    }
+                })
             })
 
             io.on('disconnect', () => {
@@ -205,7 +242,7 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
                     } else {
                         findMaster(thisProcess, drop(1, mastersList))
                     }
-                }, 1000)
+                }, 1000 + (10 * mastersList.length))
             })
         }
     }

@@ -18,19 +18,28 @@ exports.INIT_STATE = {
 const log = Logger_1.Logger.getInstance('reducer');
 function stateReducer(state = exports.INIT_STATE, action) {
     switch (action.type) {
+        case 'MASTER_SERVER_SYNC': {
+            return Object.assign({}, state, action.payload, { socketIdToUnitId: Object.assign({}, action.payload.socketIdToUnitId, state.socketIdToUnitId) });
+        }
         case 'SET_SYNC_STATE': {
             // TODO: Place items in execution queue/forward queue based on this
-            return Object.assign({}, state, action.payload);
+            return Object.assign({}, state, action.payload, { executionQueue: [...(action.payload.isMaster ? [...state.executionQueue, ...state.forwardQueue] : [])], forwardQueue: [...(action.payload.isMaster ? [] : [...state.executionQueue, ...state.forwardQueue])] });
         }
         case 'ADD_TO_QUEUE': {
-            // TODO: Decide to forward/exec queue
             const a = action;
             const executionItem = Object.assign({}, a.action, { timestamp: a.timestamp });
             return Object.assign({}, state, { executionQueue: [...state.executionQueue, executionItem] });
         }
+        case 'ADD_TO_FORWARD_QUEUE': {
+            const a = action;
+            const forwardItem = Object.assign({}, a.action, { timestamp: a.timestamp });
+            return Object.assign({}, state, { forwardQueue: [...state.forwardQueue, forwardItem] });
+        }
         case 'DRAIN_EXECUTE_QUEUE': {
-            // TODO: Handle timestamp
             return Object.assign({}, state, { executionQueue: [] });
+        }
+        case 'DRAIN_FORWARD_QUEUE': {
+            return Object.assign({}, state, { forwardQueue: [] });
         }
         // ---- Game Events ----
         case 'SPAWN_UNIT': {

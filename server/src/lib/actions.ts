@@ -1,5 +1,5 @@
 import { Action } from 'redux'
-import { UnitType } from './util';
+import { UnitType, Board } from './util';
 
 export interface GameAction extends Action {
     timestamp?: number,
@@ -86,7 +86,7 @@ export function healUnit(unitId: number): HealUnitAction {
  */
 export interface ExecutionAction extends Action {
     timestamp?: number,
-    type: 'ADD_TO_QUEUE' | 'DRAIN_EXECUTE_QUEUE' | 'SET_SYNC_STATE',
+    type: 'ADD_TO_QUEUE' | 'ADD_TO_FORWARD_QUEUE' | 'DRAIN_EXECUTE_QUEUE' | 'DRAIN_FORWARD_QUEUE' | 'SET_SYNC_STATE' | 'MASTER_SERVER_SYNC',
     action?: GameAction,
 }
 
@@ -113,8 +113,41 @@ export function addToQueue(timestamp: number, action: GameAction): ExecutionActi
     }
 }
 
+export function addToForwardQueue(timestamp: number, action: GameAction): ExecutionAction {
+    return {
+        timestamp,
+        type: 'ADD_TO_FORWARD_QUEUE',
+        action,
+    }
+}
+
 export function drainExecuteQueue(): ExecutionAction {
     return {
         type: 'DRAIN_EXECUTE_QUEUE',
+    }
+}
+
+export function drainForwardQueue(): ExecutionAction {
+    return {
+        type: 'DRAIN_FORWARD_QUEUE',
+    }
+}
+
+export interface MasterServerSyncAction extends ExecutionAction {
+    payload: {
+        timestamp: number,
+        board: Board,
+        socketIdToUnitId: {[socketId: string]: number}
+    }
+}
+
+export function masterServerSync(timestamp: number, board: Board, socketIdToUnitId: { [socketId: string]: number }): MasterServerSyncAction {
+    return {
+        type: 'MASTER_SERVER_SYNC',
+        payload: {
+            timestamp,
+            board,
+            socketIdToUnitId,
+        }
     }
 }
