@@ -64,13 +64,7 @@ const connect = function() {
 }
 
 // Socket kickstarter
-Observable
-    .interval(2500)
-    .startWith(0)
-    .filter(() => !state.connected)
-    .subscribe(() => {
-        connect();
-    })
+connect()
 
 function getDistance([x1, y1]: [number, number], [x2, y2]: [number, number]) {
     return Math.abs(x2 - x1) + Math.abs(y2 - y1);
@@ -119,7 +113,7 @@ const getNearestUnit = function getNearestUnit(type: 'DRAGON' | 'KNIGHT'): [numb
     if (location != null && state.board != null) {
         for (let i = 0; i < state.board.length; i++) {
             for (let j = 0; j < state.board.length; j++) {
-                if (state.board[i][j].type === type) {
+                if (state.board[i][j].type === type && location[0] !== i && location[1] !== j) {
                     if (type === 'DRAGON' && getDistance(location, [i, j]) <= 2) return [i, j]
                     if (type === 'KNIGHT' && getDistance(location, [i, j]) <= 5) return [i, j]
                 }
@@ -150,7 +144,7 @@ const getDragonsCount = function getDragonsCount(): number | null {
 
 // Game loop
 Observable
-    .interval(1500)
+    .interval(500)
     // Do not send actions until connected or unitId is allocated
     .filter(() => state.connected)
     .filter(() => state.unitId !== -1)
@@ -187,7 +181,7 @@ Observable
             }
         } else {
             const nearestPlayerLocation = getNearestUnit('KNIGHT')
-            if (nearestPlayerLocation && state.board![nearestPlayerLocation[0]][nearestPlayerLocation[1]]!.health < 7) {
+            if (nearestPlayerLocation && (state.board![nearestPlayerLocation[0]][nearestPlayerLocation[1]]!.health / state.board![nearestPlayerLocation[0]][nearestPlayerLocation[1]]!.maxHealth) < 0.25) {
                 // If the poor guy's health is < 50% then heal
                 action = actions[1]
             } else {
