@@ -2,7 +2,7 @@ import { AnyAction } from 'redux'
 import { Unit, KnightUnit, DragonUnit, Board, BOARD_SIZE, makeUnit, createEmptyBoard, getRandomInt, findUnitInBoard, moveUnitOnBoard, getDistance } from './util'
 import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction, MoveUnitAction, AttackUnitAction, HealUnitAction, SyncStateAction, MasterServerSyncAction } from './actions'
 import { Logger } from './Logger';
-import { dissoc } from 'ramda'
+import { dissoc, clone } from 'ramda'
 import { isMaster } from 'cluster';
 
 interface ActionHistory {
@@ -98,6 +98,11 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
         case 'SPAWN_UNIT': {
             const unitType = (action as SpawnUnitAction).payload.type
             const socketId = (action as SpawnUnitAction).payload.socketId
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: clone(state.board),
+                action: clone(action)
+            }
 
             let randomX = 0
             let randomY = 0
@@ -116,12 +121,18 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
                 socketIdToUnitId: {
                     ...state.socketIdToUnitId,
                     [socketId]: state.nextId,
-                }
+                },
+                history: [...state.history, prevState]
             }
         }
 
         case 'REMOVE_UNIT': {
             const socketId = (action as RemoveUnitAction).payload.socketId
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: clone(state.board),
+                action: clone(action)
+            }
 
             if (state.socketIdToUnitId[socketId]) {
                 const location = findUnitInBoard(state.board, state.socketIdToUnitId[socketId])
@@ -132,27 +143,42 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
                         timestamp: state.timestamp + 1,
                         board: [...state.board],
                         socketIdToUnitId: dissoc(socketId, state.socketIdToUnitId),
+                        history: [...state.history, prevState]
                     }
                 }
             }
 
-            return state
+            return {
+                ...state,
+                history: [...state.history, prevState]
+            }
         }
 
         case 'MOVE_UNIT': {
             const unitId = (action as MoveUnitAction).payload.unitId
             const direction = (action as MoveUnitAction).payload.direction
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: clone(state.board),
+                action: clone(action)
+            }
             
             return {
                 ...state,
                 timestamp: state.timestamp + 1,
-                board: moveUnitOnBoard(state.board, unitId, direction)
+                board: moveUnitOnBoard(state.board, unitId, direction),
+                history: [...state.history, prevState]
             }
         }
 
         case 'ATTACK_UNIT': {
             const unitId = (action as AttackUnitAction).payload.unitId
             const target = (action as AttackUnitAction).payload.target
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: clone(state.board),
+                action: clone(action)
+            }
             
             // Find nearest dragon unit and reduce its health
             const location = findUnitInBoard(state.board, unitId)
@@ -181,19 +207,28 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
                                 ...state,
                                 timestamp: state.timestamp + 1,
                                 board: [...state.board],
-                                socketIdToUnitId: {...newSocketIdToUnitId}
+                                socketIdToUnitId: {...newSocketIdToUnitId},
+                                history: [...state.history, prevState]
                             }
                         }
                     }
                 }
             }
 
-            return state
+            return {
+                ...state,
+                history: [...state.history, prevState]
+            }
         }
 
         case 'HEAL_UNIT': {
             const unitId = (action as HealUnitAction).payload.unitId
-            
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: clone(state.board),
+                action: clone(action)
+            } 
+
             // Find nearest dragon unit and reduce its health
             const location = findUnitInBoard(state.board, unitId)
             if (location != null) {
@@ -208,15 +243,18 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
                             return {
                                 ...state,
                                 timestamp: state.timestamp + 1,
-                                board: [...state.board]
+                                board: [...state.board],
+                                history: [...state.history, prevState]
                             }
                         }
                     }
                 }
             }
 
-            return state
-
+            return {
+                ...state,
+                history: [...state.history, prevState]
+            }
         }
     }
 

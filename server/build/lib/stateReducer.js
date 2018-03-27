@@ -45,6 +45,11 @@ function stateReducer(state = exports.INIT_STATE, action) {
         case 'SPAWN_UNIT': {
             const unitType = action.payload.type;
             const socketId = action.payload.socketId;
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: ramda_1.clone(state.board),
+                action: ramda_1.clone(action)
+            };
             let randomX = 0;
             let randomY = 0;
             do {
@@ -52,27 +57,42 @@ function stateReducer(state = exports.INIT_STATE, action) {
                 randomY = util_1.getRandomInt(0, util_1.BOARD_SIZE - 1);
             } while (state.board[randomX][randomY].type !== 'EMPTY');
             state.board[randomX][randomY] = util_1.makeUnit(unitType, state.nextId);
-            return Object.assign({}, state, { nextId: state.nextId + 1, timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: Object.assign({}, state.socketIdToUnitId, { [socketId]: state.nextId }) });
+            return Object.assign({}, state, { nextId: state.nextId + 1, timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: Object.assign({}, state.socketIdToUnitId, { [socketId]: state.nextId }), history: [...state.history, prevState] });
         }
         case 'REMOVE_UNIT': {
             const socketId = action.payload.socketId;
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: ramda_1.clone(state.board),
+                action: ramda_1.clone(action)
+            };
             if (state.socketIdToUnitId[socketId]) {
                 const location = util_1.findUnitInBoard(state.board, state.socketIdToUnitId[socketId]);
                 if (location) {
                     state.board[location[0]][location[1]] = util_1.makeUnit('EMPTY');
-                    return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: ramda_1.dissoc(socketId, state.socketIdToUnitId) });
+                    return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: ramda_1.dissoc(socketId, state.socketIdToUnitId), history: [...state.history, prevState] });
                 }
             }
-            return state;
+            return Object.assign({}, state, { history: [...state.history, prevState] });
         }
         case 'MOVE_UNIT': {
             const unitId = action.payload.unitId;
             const direction = action.payload.direction;
-            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: util_1.moveUnitOnBoard(state.board, unitId, direction) });
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: ramda_1.clone(state.board),
+                action: ramda_1.clone(action)
+            };
+            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: util_1.moveUnitOnBoard(state.board, unitId, direction), history: [...state.history, prevState] });
         }
         case 'ATTACK_UNIT': {
             const unitId = action.payload.unitId;
             const target = action.payload.target;
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: ramda_1.clone(state.board),
+                action: ramda_1.clone(action)
+            };
             // Find nearest dragon unit and reduce its health
             const location = util_1.findUnitInBoard(state.board, unitId);
             if (location != null) {
@@ -93,15 +113,20 @@ function stateReducer(state = exports.INIT_STATE, action) {
                                 }
                                 return state.socketIdToUnitId;
                             })();
-                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: Object.assign({}, newSocketIdToUnitId) });
+                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: Object.assign({}, newSocketIdToUnitId), history: [...state.history, prevState] });
                         }
                     }
                 }
             }
-            return state;
+            return Object.assign({}, state, { history: [...state.history, prevState] });
         }
         case 'HEAL_UNIT': {
             const unitId = action.payload.unitId;
+            const prevState = {
+                timestamp: state.timestamp,
+                prevBoardState: ramda_1.clone(state.board),
+                action: ramda_1.clone(action)
+            };
             // Find nearest dragon unit and reduce its health
             const location = util_1.findUnitInBoard(state.board, unitId);
             if (location != null) {
@@ -111,12 +136,12 @@ function stateReducer(state = exports.INIT_STATE, action) {
                             state.board[i][j].id !== unitId &&
                             util_1.getDistance(location, [i, j]) <= 5) {
                             state.board[i][j].health = Math.min(state.board[i][j].health + state.board[location[0]][location[1]].attack, state.board[i][j].maxHealth);
-                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board] });
+                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], history: [...state.history, prevState] });
                         }
                     }
                 }
             }
-            return state;
+            return Object.assign({}, state, { history: [...state.history, prevState] });
         }
     }
     return state;
