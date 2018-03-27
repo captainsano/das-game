@@ -13,13 +13,12 @@ exports.INIT_STATE = {
     executionQueue: [],
     forwardQueue: [],
     history: [],
-    socketIdToUnitId: {}
 };
 const log = Logger_1.Logger.getInstance('reducer');
 function stateReducer(state = exports.INIT_STATE, action) {
     switch (action.type) {
         case 'MASTER_SERVER_SYNC': {
-            return Object.assign({}, state, action.payload, { socketIdToUnitId: Object.assign({}, action.payload.socketIdToUnitId, state.socketIdToUnitId) });
+            return Object.assign({}, state, action.payload);
         }
         case 'SET_SYNC_STATE': {
             // TODO: Place items in execution queue/forward queue based on this
@@ -59,8 +58,8 @@ function stateReducer(state = exports.INIT_STATE, action) {
                 randomX = util_1.getRandomInt(0, util_1.BOARD_SIZE - 1);
                 randomY = util_1.getRandomInt(0, util_1.BOARD_SIZE - 1);
             } while (state.board[randomX][randomY].type !== 'EMPTY');
-            state.board[randomX][randomY] = util_1.makeUnit(unitType, state.nextId);
-            return Object.assign({}, state, { nextId: state.nextId + 1, timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: Object.assign({}, state.socketIdToUnitId, { [socketId]: state.nextId }), history: [...state.history, prevState] });
+            state.board[randomX][randomY] = util_1.makeUnit(unitType, state.nextId, socketId);
+            return Object.assign({}, state, { nextId: state.nextId + 1, timestamp: state.timestamp + 1, board: [...state.board], history: [...state.history, prevState] });
         }
         case 'REMOVE_UNIT': {
             const socketId = action.payload.socketId;
@@ -69,12 +68,10 @@ function stateReducer(state = exports.INIT_STATE, action) {
                 prevBoardState: ramda_1.clone(state.board),
                 action: ramda_1.clone(action)
             };
-            if (state.socketIdToUnitId[socketId]) {
-                const location = util_1.findUnitInBoard(state.board, state.socketIdToUnitId[socketId]);
-                if (location) {
-                    state.board[location[0]][location[1]] = util_1.makeUnit('EMPTY');
-                    return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: ramda_1.dissoc(socketId, state.socketIdToUnitId), history: [...state.history, prevState] });
-                }
+            const location = util_1.findKnightUnitInBoard(state.board, socketId);
+            if (location) {
+                state.board[location[0]][location[1]] = util_1.makeUnit('EMPTY');
+                return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], history: [...state.history, prevState] });
             }
             return Object.assign({}, state, { history: [...state.history, prevState] });
         }
@@ -105,18 +102,7 @@ function stateReducer(state = exports.INIT_STATE, action) {
                             const updatedHealth = state.board[i][j].health - state.board[location[0]][location[1]].attack;
                             const affectedUnit = state.board[i][j];
                             state.board[i][j] = updatedHealth <= 0 ? util_1.makeUnit('EMPTY') : Object.assign({}, state.board[i][j], { health: updatedHealth });
-                            // If the unit's health is 0 then remove the unit from sockets as well (equal to disconnection)
-                            const newSocketIdToUnitId = (() => {
-                                if (updatedHealth <= 0) {
-                                    for (let k in state.socketIdToUnitId) {
-                                        if (state.socketIdToUnitId[k] === affectedUnit.id) {
-                                            return ramda_1.dissoc(k, state.socketIdToUnitId);
-                                        }
-                                    }
-                                }
-                                return state.socketIdToUnitId;
-                            })();
-                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], socketIdToUnitId: Object.assign({}, newSocketIdToUnitId), history: [...state.history, prevState] });
+                            return Object.assign({}, state, { timestamp: state.timestamp + 1, board: [...state.board], history: [...state.history, prevState] });
                         }
                     }
                 }

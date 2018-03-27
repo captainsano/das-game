@@ -139,18 +139,16 @@ export interface MasterServerSyncAction extends ExecutionAction {
         nextId: number,
         timestamp: number,
         board: Board,
-        socketIdToUnitId: {[socketId: string]: number}
     }
 }
 
-export function masterServerSync(nextId: number, timestamp: number, board: Board, socketIdToUnitId: { [socketId: string]: number }): MasterServerSyncAction {
+export function masterServerSync(nextId: number, timestamp: number, board: Board): MasterServerSyncAction {
     return {
         type: 'MASTER_SERVER_SYNC',
         payload: {
             nextId,
             timestamp,
             board,
-            socketIdToUnitId,
         }
     }
 }

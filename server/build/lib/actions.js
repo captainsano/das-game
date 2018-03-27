@@ -70,14 +70,13 @@ function drainForwardQueue() {
     };
 }
 exports.drainForwardQueue = drainForwardQueue;
-function masterServerSync(nextId, timestamp, board, socketIdToUnitId) {
+function masterServerSync(nextId, timestamp, board) {
     return {
         type: 'MASTER_SERVER_SYNC',
         payload: {
             nextId,
             timestamp,
             board,
-            socketIdToUnitId,
         }
     };
 }

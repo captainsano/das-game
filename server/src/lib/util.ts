@@ -19,7 +19,8 @@ export interface DragonUnit extends Unit {
 }
 
 export interface KnightUnit extends Unit {
-    type: 'KNIGHT'
+    type: 'KNIGHT',
+    socketId: string,
 }
 
 export type Board = Unit[][]
@@ -42,17 +43,18 @@ export function getRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
-export function makeUnit(type: UnitType, id: number = -999): Unit {
+export function makeUnit(type: UnitType, id: number = -999, socketId: string = ''): Unit {
     switch (type) {
         case 'KNIGHT': {
             const health = getRandomInt(10, 20)
             return {
                 id,
+                socketId,
                 type: 'KNIGHT',
                 attack: getRandomInt(1, 10),
                 health,
-                maxHealth: health
-            }
+                maxHealth: health,
+            } as KnightUnit
         }
 
         case 'DRAGON': {
@@ -93,6 +95,15 @@ export function findUnitInBoard(board: Board, id: number): Square | null {
     for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board.length; j++) {
             if (board[i][j].id === id) return [i, j]
+        }
+    }
+    return null
+}
+
+export function findKnightUnitInBoard(board: Board, socketId: string): Square | null {
+    for (let i = 0; i < board.length; i++) {
+        for (let j = 0; j < board.length; j++) {
+            if (board[i][j].type === 'KNIGHT' && (board[i][j] as KnightUnit).socketId === socketId) return [i, j]
         }
     }
     return null

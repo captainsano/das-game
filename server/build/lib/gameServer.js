@@ -28,22 +28,6 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
             const timestamp = (store.getState() || { timestamp: 0 }).timestamp;
             store.dispatch(actions_1.addToQueue(timestamp, actions_1.spawnUnit(socket.id, 'KNIGHT')));
         });
-        socket.on('RECONNECT', ({ timestamp, unitId }) => {
-            globalSocketEvents.next(['RECONNECT', { socketId: socket.id, timestamp, unitId }]);
-            const state = store.getState();
-            if (state) {
-                const foundUnitId = ramda_1.find((id) => id === unitId, ramda_1.values(state.socketIdToUnitId));
-                if (!foundUnitId) {
-                    store.dispatch(actions_1.addToQueue(timestamp, actions_1.spawnUnit(socket.id, 'KNIGHT')));
-                }
-                else {
-                    socket.emit('STATE_UPDATE', {
-                        timestamp: store.getState().timestamp,
-                        board: store.getState().board
-                    });
-                }
-            }
-        });
         socket.on('MESSAGE', ({ unitId, action, timestamp }) => {
             globalSocketEvents.next(['MESSAGE', { socketId: socket.id, unitId, action, timestamp }]);
             switch (action) {
@@ -72,20 +56,12 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
             globalSocketEvents.next(['disconnect', { socketId: socket.id }]);
             const state = store.getState();
             const socketId = socket.id;
-            if (state) {
-                const unitId = state.socketIdToUnitId[socket.id];
-                if (unitId) {
-                    rxjs_1.Observable.of(0)
-                        .delay(10000)
-                        .takeUntil(globalSocketEvents.filter((event) => event[0] === 'RECONNECT' && event[1].unitId === unitId))
-                        .subscribe(() => store.dispatch(actions_1.addToQueue(store.getState().timestamp, actions_1.removeUnit(socketId))));
-                }
-            }
+            store.dispatch(actions_1.addToQueue(store.getState().timestamp, actions_1.removeUnit(socketId)));
         });
     });
     // Game execution and forward queue management
     rxjs_1.Observable
-        .interval(1000)
+        .interval(100)
         .filter(() => store.getState() !== null && !store.getState().connecting)
         .filter(() => store.getState() !== null && store.getState().isMaster)
         .do((val) => {
@@ -101,7 +77,7 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
                     // If the action is in the execution queue
                     const sortedExecutionQueue = ramda_1.sortBy((e) => e.timestamp, state.executionQueue);
                     const firstTimestamp = sortedExecutionQueue[0].timestamp;
-                    if (firstTimestamp < state.timestamp) {
+                    if (state.timestamp - firstTimestamp >= 250) {
                         // Find the board state at firstTimestamp - 1
                         const sortedHistory = ramda_1.sortBy((h) => h.timestamp, state.history);
                         const prevState = ramda_1.find((h) => h.timestamp === firstTimestamp - 1, sortedHistory);
@@ -134,7 +110,7 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
     });
     // Forward execution queue to master server
     rxjs_1.Observable
-        .interval(1000)
+        .interval(100)
         .filter(() => store.getState() !== null && !store.getState().connecting)
         .filter(() => store.getState() !== null && !store.getState().isMaster && store.getState().masterSocket != null)
         .subscribe(() => {
@@ -162,7 +138,7 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
             }
         });
     })
-        .bufferTime(1000)
+        .bufferTime(100)
         .do((states) => {
         if (states.length > 0) {
             gameIo.sockets.emit('STATE_UPDATE', {
@@ -177,7 +153,6 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
                 nextId: states[states.length - 1].nextId,
                 timestamp: states[states.length - 1].timestamp,
                 board: states[states.length - 1].board,
-                socketIdToUnitId: states[states.length - 1].socketIdToUnitId
             });
         }
     })
@@ -213,7 +188,6 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
                     socket.emit('SYNC', {
                         timestamp: state.timestamp,
                         board: state.board,
-                        socketIdToUnitId: state.socketIdToUnitId
                     });
                 }
                 socket.on('FORWARD', ({ timestamp, action }) => {
@@ -244,8 +218,8 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
             io.on('connect', () => {
                 log.info({ master: nextMaster }, 'Connection made to master');
                 store.dispatch(actions_1.setSyncState(false, false, io));
-                io.on('SYNC', ({ nextId, timestamp, board, socketIdToUnitId }) => {
-                    store.dispatch(actions_1.masterServerSync(nextId, timestamp, board, socketIdToUnitId));
+                io.on('SYNC', ({ nextId, timestamp, board }) => {
+                    store.dispatch(actions_1.masterServerSync(nextId, timestamp, board));
                 });
                 io.on('ASSIGN_UNIT_ID', ({ socketId, unitId }) => {
                     if (gameIo.sockets.connected[socketId]) {

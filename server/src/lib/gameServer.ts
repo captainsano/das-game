@@ -34,23 +34,6 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
             store.dispatch(addToQueue(timestamp, spawnUnit(socket.id, 'KNIGHT')))
         })
 
-        socket.on('RECONNECT', ({ timestamp, unitId }) => {
-            globalSocketEvents.next(['RECONNECT', {socketId: socket.id, timestamp, unitId}])
-
-            const state = store.getState()
-            if (state) {
-                const foundUnitId = find((id) => id === unitId, values(state.socketIdToUnitId))
-                if (!foundUnitId) {
-                    store.dispatch(addToQueue(timestamp, spawnUnit(socket.id, 'KNIGHT')))
-                } else {
-                    socket.emit('STATE_UPDATE', {
-                        timestamp: store.getState()!.timestamp,
-                        board: store.getState()!.board
-                    })
-                }
-            }
-        })
-
         socket.on('MESSAGE', ({ unitId, action, timestamp }) => {
             globalSocketEvents.next(['MESSAGE', {socketId: socket.id, unitId, action, timestamp}])
             switch (action) {
@@ -78,25 +61,15 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
         socket.on('disconnect', () => {
             log.info({socketId: socket.id}, `Disconnect`)
             globalSocketEvents.next(['disconnect', {socketId: socket.id}])
-
             const state = store.getState()
             const socketId = socket.id
-
-            if (state) {
-                const unitId = state.socketIdToUnitId[socket.id]
-                if (unitId) {
-                    Observable.of(0)
-                        .delay(10000)
-                        .takeUntil(globalSocketEvents.filter((event: [string, {unitId: number}]) => event[0] === 'RECONNECT' && event[1].unitId === unitId))
-                        .subscribe(() => store.dispatch(addToQueue(store.getState()!.timestamp, removeUnit(socketId))))
-                }
-            }
+            store.dispatch(addToQueue(store.getState()!.timestamp, removeUnit(socketId)))
         })
     })
 
     // Game execution and forward queue management
     Observable
-        .interval(1000)
+        .interval(100)
         .filter(() => store.getState() !== null && !store.getState()!.connecting)
         .filter(() => store.getState() !== null && store.getState()!.isMaster)
         .do((val) => { 
@@ -113,7 +86,7 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
                         const sortedExecutionQueue = sortBy((e: GameAction) => e.timestamp!, state.executionQueue)
                         const firstTimestamp = sortedExecutionQueue[0].timestamp!
 
-                        if (firstTimestamp < state.timestamp) {
+                        if (state.timestamp - firstTimestamp >= 250) {
                             // Find the board state at firstTimestamp - 1
                             const sortedHistory = sortBy((h) => h.timestamp, state.history)
                             const prevState = find((h) => h.timestamp === firstTimestamp - 1, sortedHistory)
@@ -145,7 +118,7 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
 
     // Forward execution queue to master server
     Observable
-        .interval(1000)
+        .interval(100)
         .filter(() => store.getState() !== null && !store.getState()!.connecting)
         .filter(() => store.getState() !== null && !store.getState()!.isMaster && store.getState()!.masterSocket != null)
         .subscribe(() => { 
@@ -173,7 +146,7 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
             if (state != null) { o.next(state) }
         })
     })
-    .bufferTime(1000)
+    .bufferTime(100)
     .do((states: GameState[]) => { 
         if (states.length > 0) {
             gameIo.sockets.emit('STATE_UPDATE', {
@@ -188,7 +161,6 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
                 nextId: states[states.length - 1].nextId,
                 timestamp: states[states.length - 1].timestamp,
                 board: states[states.length - 1].board,
-                socketIdToUnitId: states[states.length - 1].socketIdToUnitId
             })
         }
     })
@@ -227,7 +199,6 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
                     socket.emit('SYNC', {
                         timestamp: state.timestamp,
                         board: state.board,
-                        socketIdToUnitId: state.socketIdToUnitId
                     })
                 }
 
@@ -261,8 +232,8 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
                 log.info({master: nextMaster}, 'Connection made to master')
                 store.dispatch(setSyncState(false, false, io))
 
-                io.on('SYNC', ({ nextId, timestamp, board, socketIdToUnitId }) => {
-                    store.dispatch(masterServerSync(nextId, timestamp, board, socketIdToUnitId))
+                io.on('SYNC', ({ nextId, timestamp, board }) => {
+                    store.dispatch(masterServerSync(nextId, timestamp, board))
                 })
 
                 io.on('ASSIGN_UNIT_ID', ({ socketId, unitId }) => {

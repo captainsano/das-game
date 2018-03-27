@@ -1,5 +1,5 @@
 import { AnyAction } from 'redux'
-import { Unit, KnightUnit, DragonUnit, Board, BOARD_SIZE, makeUnit, createEmptyBoard, getRandomInt, findUnitInBoard, moveUnitOnBoard, getDistance } from './util'
+import { Unit, KnightUnit, DragonUnit, Board, BOARD_SIZE, makeUnit, createEmptyBoard, getRandomInt, findUnitInBoard, moveUnitOnBoard, getDistance, findKnightUnitInBoard } from './util'
 import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction, MoveUnitAction, AttackUnitAction, HealUnitAction, SyncStateAction, MasterServerSyncAction, ResetStateAction } from './actions'
 import { Logger } from './Logger';
 import { dissoc, clone } from 'ramda'
@@ -21,7 +21,6 @@ export interface GameState {
     executionQueue: GameAction[],
     forwardQueue: GameAction[],
     history: ActionHistory[],
-    socketIdToUnitId: {[socketId: string]: number}
 }
 
 export const INIT_STATE = {
@@ -34,7 +33,6 @@ export const INIT_STATE = {
     executionQueue: [] as GameAction[],
     forwardQueue: [] as GameAction[],
     history: [] as ActionHistory[],
-    socketIdToUnitId: {}
 } as GameState
 
 const log = Logger.getInstance('reducer')
@@ -44,11 +42,7 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
         case 'MASTER_SERVER_SYNC': {
             return {
                 ...state,
-                ...(action as MasterServerSyncAction).payload,
-                socketIdToUnitId: {
-                    ...(action as MasterServerSyncAction).payload.socketIdToUnitId,
-                    ...state.socketIdToUnitId
-                }
+                ...(action as MasterServerSyncAction).payload
             }
         }
 
@@ -118,17 +112,13 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
                 randomY = getRandomInt(0, BOARD_SIZE - 1)
             } while (state.board[randomX][randomY].type !== 'EMPTY')
 
-            state.board[randomX][randomY] = makeUnit(unitType, state.nextId)
+            state.board[randomX][randomY] = makeUnit(unitType, state.nextId, socketId)
     
             return {
                 ...state,
                 nextId: state.nextId + 1,
                 timestamp: state.timestamp + 1,
                 board: [...state.board],
-                socketIdToUnitId: {
-                    ...state.socketIdToUnitId,
-                    [socketId]: state.nextId,
-                },
                 history: [...state.history, prevState]
             }
         }
@@ -141,17 +131,14 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
                 action: clone(action)
             }
             
-            if (state.socketIdToUnitId[socketId]) {
-                const location = findUnitInBoard(state.board, state.socketIdToUnitId[socketId])
-                if (location) {
-                    state.board[location[0]][location[1]] = makeUnit('EMPTY')
-                    return {
-                        ...state,
-                        timestamp: state.timestamp + 1,
-                        board: [...state.board],
-                        socketIdToUnitId: dissoc(socketId, state.socketIdToUnitId),
-                        history: [...state.history, prevState]
-                    }
+            const location = findKnightUnitInBoard(state.board, socketId)
+            if (location) {
+                state.board[location[0]][location[1]] = makeUnit('EMPTY')
+                return {
+                    ...state,
+                    timestamp: state.timestamp + 1,
+                    board: [...state.board],
+                    history: [...state.history, prevState]
                 }
             }
 
@@ -197,24 +184,10 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
                             const affectedUnit = state.board[i][j]
                             state.board[i][j] = updatedHealth <= 0 ? makeUnit('EMPTY') : { ...state.board[i][j], health: updatedHealth }
                             
-                            // If the unit's health is 0 then remove the unit from sockets as well (equal to disconnection)
-                            const newSocketIdToUnitId = (() => {
-                                if (updatedHealth <= 0) {
-                                    for (let k in state.socketIdToUnitId) {
-                                        if (state.socketIdToUnitId[k] === affectedUnit.id) {
-                                            return dissoc(k, state.socketIdToUnitId)
-                                        }
-                                    }
-                                }
-
-                                return state.socketIdToUnitId
-                            })()
-
                             return {
                                 ...state,
                                 timestamp: state.timestamp + 1,
                                 board: [...state.board],
-                                socketIdToUnitId: {...newSocketIdToUnitId},
                                 history: [...state.history, prevState]
                             }
                         }

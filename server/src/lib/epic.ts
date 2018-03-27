@@ -7,6 +7,7 @@ import { ActionsObservable } from 'redux-observable'
 import { Logger } from './Logger'
 import { Server } from 'socket.io'
 import { dissocPath } from 'ramda'
+import { findKnightUnitInBoard } from './util';
 
 const log = Logger.getInstance('LoggerEpic')
 
@@ -21,10 +22,18 @@ export default function epicFactory(gameIo: Server, syncIo: Server) {
             return action$.ofType('SPAWN_UNIT')
                 .do((action: SpawnUnitAction) => {
                     const socketId = action.payload.socketId
-                    if (store.getState().socketIdToUnitId[socketId] && gameIo.sockets.connected[socketId]) {
-                        gameIo.sockets.connected[socketId].emit('ASSIGN_UNIT_ID', store.getState().socketIdToUnitId[socketId])
+                    const state = store.getState()!
+
+                    if (state) {
+                        const location = findKnightUnitInBoard(state.board, socketId)
+                        if (location) {
+                            const unit = state.board[location[0]][location[1]]
+                            if (gameIo.sockets.connected[socketId]) {
+                                gameIo.sockets.connected[socketId].emit('ASSIGN_UNIT_ID', unit.id)
+                            }
+                            syncIo.sockets.emit('ASSIGN_UNIT_ID', { socketId, unitId: unit.id })
+                        }
                     }
-                    syncIo.sockets.emit('ASSIGN_UNIT_ID', { socketId, unitId: store.getState().socketIdToUnitId[socketId] })
                 })
                 .flatMapTo(Observable.empty())
         }

@@ -14,16 +14,17 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 exports.getRandomInt = getRandomInt;
-function makeUnit(type, id = -999) {
+function makeUnit(type, id = -999, socketId = '') {
     switch (type) {
         case 'KNIGHT': {
             const health = getRandomInt(10, 20);
             return {
                 id,
+                socketId,
                 type: 'KNIGHT',
                 attack: getRandomInt(1, 10),
                 health,
-                maxHealth: health
+                maxHealth: health,
             };
         }
         case 'DRAGON': {
@@ -69,6 +70,16 @@ function findUnitInBoard(board, id) {
     return null;
 }
 exports.findUnitInBoard = findUnitInBoard;
+function findKnightUnitInBoard(board, socketId) {
+    for (let i = 0; i < board.length; i++) {
+        for (let j = 0; j < board.length; j++) {
+            if (board[i][j].type === 'KNIGHT' && board[i][j].socketId === socketId)
+                return [i, j];
+        }
+    }
+    return null;
+}
+exports.findKnightUnitInBoard = findKnightUnitInBoard;
 function isInsideBoard(size, i) {
     if (i < 0)
         return false;
