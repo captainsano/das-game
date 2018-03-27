@@ -1,11 +1,11 @@
 import { AnyAction } from 'redux'
 import { Unit, KnightUnit, DragonUnit, Board, BOARD_SIZE, makeUnit, createEmptyBoard, getRandomInt, findUnitInBoard, moveUnitOnBoard, getDistance } from './util'
-import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction, MoveUnitAction, AttackUnitAction, HealUnitAction, SyncStateAction, MasterServerSyncAction } from './actions'
+import { GameAction, ExecutionAction, SpawnUnitAction, RemoveUnitAction, MoveUnitAction, AttackUnitAction, HealUnitAction, SyncStateAction, MasterServerSyncAction, ResetStateAction } from './actions'
 import { Logger } from './Logger';
 import { dissoc, clone } from 'ramda'
 import { isMaster } from 'cluster';
 
-interface ActionHistory {
+export interface ActionHistory {
     timestamp: number,
     prevBoardState: Board,
     action: GameAction | ExecutionAction,
@@ -39,7 +39,7 @@ export const INIT_STATE = {
 
 const log = Logger.getInstance('reducer')
 
-export function stateReducer(state: GameState = INIT_STATE, action: GameAction | ExecutionAction): GameState {
+export function stateReducer(state: GameState = INIT_STATE, action: GameAction | ExecutionAction | ResetStateAction): GameState {
     switch (action.type) {
         case 'MASTER_SERVER_SYNC': {
             return {
@@ -60,6 +60,13 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
                executionQueue: [...((action as SyncStateAction).payload.isMaster ? [...state.executionQueue, ...state.forwardQueue] : [])],
                forwardQueue: [...((action as SyncStateAction).payload.isMaster ? [] : [...state.executionQueue, ...state.forwardQueue])]
            }
+        }
+
+        case 'RESET_STATE': {
+            return {
+                ...state,
+                ...(action as ResetStateAction).payload,
+            }
         }
 
         case 'ADD_TO_QUEUE': {

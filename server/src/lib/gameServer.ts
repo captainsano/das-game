@@ -2,7 +2,7 @@ import 'rxjs'
 import { Server, Socket } from 'socket.io'
 import * as SocketIOClient from 'socket.io-client'
 import { Logger } from './Logger'
-import { values, find, drop } from 'ramda'
+import { values, find, drop, sortBy } from 'ramda'
 import { createStore, applyMiddleware } from 'redux'
 import { stateReducer, INIT_STATE, GameState } from './stateReducer'
 import { addToQueue, spawnUnit, removeUnit, drainExecuteQueue, attackUnit, healUnit, moveUnit, setSyncState, ExecutionAction, GameAction, addToForwardQueue, drainForwardQueue, masterServerSync } from './actions'
@@ -109,9 +109,21 @@ export default function gameServer(gameIo: Server, syncIo: Server, thisServer: s
             const state = store.getState()
             if (state != null && state.executionQueue.length > 0) {
                 if (state.isMaster) {
-                    // TODO: Handle out of order timestamps and replays on execution
-                    state.executionQueue.forEach((a) => store.dispatch(a))
-                    store.dispatch(drainExecuteQueue())
+                    // TODO: Handle out of order timestamps and replays
+                    
+                    if (state.executionQueue.length > 0) {
+                        // If the action is in the execution queue
+                        const sortedExecutionQueue = sortBy((e: GameAction) => e.timestamp!, state.executionQueue)
+                        const firstTimestamp = sortedExecutionQueue[0].timestamp!
+
+                        if (firstTimestamp < state.timestamp) {
+                            log.fatal(`Need to replay events from ${firstTimestamp}`)
+                            // Find the board state at firstTimestamp - 1
+                        } else {
+                            sortedExecutionQueue.forEach((a) => store.dispatch(a))
+                            store.dispatch(drainExecuteQueue())
+                        }
+                    }
                 } else {
                     state.executionQueue.forEach((a: GameAction) => store.dispatch(addToForwardQueue(a.timestamp!, a)))
                     store.dispatch(drainExecuteQueue())

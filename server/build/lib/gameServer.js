@@ -98,9 +98,20 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
         const state = store.getState();
         if (state != null && state.executionQueue.length > 0) {
             if (state.isMaster) {
-                // TODO: Handle out of order timestamps and replays on execution
-                state.executionQueue.forEach((a) => store.dispatch(a));
-                store.dispatch(actions_1.drainExecuteQueue());
+                // TODO: Handle out of order timestamps and replays
+                if (state.executionQueue.length > 0) {
+                    // If the action is in the execution queue
+                    const sortedExecutionQueue = ramda_1.sortBy((e) => e.timestamp, state.executionQueue);
+                    const firstTimestamp = sortedExecutionQueue[0].timestamp;
+                    if (firstTimestamp < state.timestamp) {
+                        log.fatal(`Need to replay events from ${firstTimestamp}`);
+                        // Find the board state at firstTimestamp - 1
+                    }
+                    else {
+                        sortedExecutionQueue.forEach((a) => store.dispatch(a));
+                        store.dispatch(actions_1.drainExecuteQueue());
+                    }
+                }
             }
             else {
                 state.executionQueue.forEach((a) => store.dispatch(actions_1.addToForwardQueue(a.timestamp, a)));

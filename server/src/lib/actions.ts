@@ -1,5 +1,6 @@
 import { Action } from 'redux'
 import { UnitType, Board } from './util';
+import { ActionHistory } from './stateReducer';
 
 export interface GameAction extends Action {
     timestamp?: number,
@@ -149,5 +150,21 @@ export function masterServerSync(timestamp: number, board: Board, socketIdToUnit
             board,
             socketIdToUnitId,
         }
+    }
+}
+
+export interface ResetStateAction {
+    type: 'RESET_STATE',
+    payload: {
+        timestamp: number,
+        board: Board,
+        history: ActionHistory[],
+    }
+}
+
+export function resetState(timestamp: number, board: Board, history: ActionHistory[]) {
+    return {
+        type: 'RESET_STATE',
+        payload: { timestamp, board, history }
     }
 }

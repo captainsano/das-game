@@ -25,6 +25,9 @@ function stateReducer(state = exports.INIT_STATE, action) {
             // TODO: Place items in execution queue/forward queue based on this
             return Object.assign({}, state, action.payload, { executionQueue: [...(action.payload.isMaster ? [...state.executionQueue, ...state.forwardQueue] : [])], forwardQueue: [...(action.payload.isMaster ? [] : [...state.executionQueue, ...state.forwardQueue])] });
         }
+        case 'RESET_STATE': {
+            return Object.assign({}, state, action.payload);
+        }
         case 'ADD_TO_QUEUE': {
             const a = action;
             const executionItem = Object.assign({}, a.action, { timestamp: a.timestamp });

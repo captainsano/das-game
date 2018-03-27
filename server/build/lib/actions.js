@@ -81,3 +81,10 @@ function masterServerSync(timestamp, board, socketIdToUnitId) {
     };
 }
 exports.masterServerSync = masterServerSync;
+function resetState(timestamp, board, history) {
+    return {
+        type: 'RESET_STATE',
+        payload: { timestamp, board, history }
+    };
+}
+exports.resetState = resetState;
