@@ -8,11 +8,7 @@ export function getRandomInt(min: number, max: number): number {
 }
 
 const servers = [
-    'localhost:8000',
     'localhost:8001',
-    'localhost:8002',
-    'localhost:8003',
-    'localhost:8004',
 ]
 
 let randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;

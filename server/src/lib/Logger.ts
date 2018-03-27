@@ -1,5 +1,6 @@
 import * as os from 'os'
-import { createLogger, INFO, LogLevelString } from 'bunyan'
+import { dissoc } from 'ramda'
+import { createLogger, INFO, FATAL, LogLevelString } from 'bunyan'
 import * as Bunyan from 'bunyan'
 import * as PrettyStream from 'bunyan-pretty-stream'
 
@@ -10,11 +11,9 @@ export interface LoggerConfig {
 
 export class Logger {
   private static config: LoggerConfig | null = null
-
   private static instance: Bunyan
 
-  private constructor() {
-  }
+  private constructor() { }
 
   static configure(config: LoggerConfig) {
     Logger.config = config

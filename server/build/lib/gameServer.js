@@ -90,7 +90,6 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
         .filter(() => store.getState() !== null && store.getState().isMaster)
         .do((val) => {
         if ((val * 1000) % 5000 === 0) {
-            log.info('Dragons attack');
             dragonsAttack_1.default(store);
         }
     })
@@ -98,24 +97,38 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
         const state = store.getState();
         if (state != null && state.executionQueue.length > 0) {
             if (state.isMaster) {
-                // TODO: Handle out of order timestamps and replays
                 if (state.executionQueue.length > 0) {
                     // If the action is in the execution queue
                     const sortedExecutionQueue = ramda_1.sortBy((e) => e.timestamp, state.executionQueue);
                     const firstTimestamp = sortedExecutionQueue[0].timestamp;
                     if (firstTimestamp < state.timestamp) {
-                        log.fatal(`Need to replay events from ${firstTimestamp}`);
                         // Find the board state at firstTimestamp - 1
+                        const sortedHistory = ramda_1.sortBy((h) => h.timestamp, state.history);
+                        const prevState = ramda_1.find((h) => h.timestamp === firstTimestamp - 1, sortedHistory);
+                        if (prevState) {
+                            log.info({ replayFromTimestamp: firstTimestamp - 1 }, 'Rebuilding state from current actions');
+                            // Take actions from history
+                            const newActions = ramda_1.sortBy((a) => a.timestamp, [
+                                ...sortedHistory.map((h) => h.action).filter((a) => a.timestamp >= firstTimestamp),
+                                ...sortedExecutionQueue,
+                            ]);
+                            const newState = newActions.reduce((acc, a) => stateReducer_1.stateReducer(acc, a), Object.assign({}, state, { timestamp: prevState.timestamp, board: prevState.prevBoardState, history: [] }));
+                            store.dispatch(actions_1.resetState(newState.timestamp, newState.board, newState.history));
+                            store.dispatch(actions_1.drainExecuteQueue());
+                            log.info({ timestamp: newState.timestamp }, 'Finished replaying');
+                        }
+                        else {
+                            // State was not found, so just try to apply the actions as it is (best effort)
+                            log.info({ timestamp: state.timestamp, notFoundTimestamp: firstTimestamp - 1 }, 'Timestamp not found, so applying all actions in sequence from current state');
+                            sortedExecutionQueue.forEach((a) => store.dispatch(a));
+                            store.dispatch(actions_1.drainExecuteQueue());
+                        }
                     }
                     else {
                         sortedExecutionQueue.forEach((a) => store.dispatch(a));
                         store.dispatch(actions_1.drainExecuteQueue());
                     }
                 }
-            }
-            else {
-                state.executionQueue.forEach((a) => store.dispatch(actions_1.addToForwardQueue(a.timestamp, a)));
-                store.dispatch(actions_1.drainExecuteQueue());
             }
         }
     });
@@ -126,13 +139,18 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
         .filter(() => store.getState() !== null && !store.getState().isMaster && store.getState().masterSocket != null)
         .subscribe(() => {
         const state = store.getState();
-        if (state != null && state.forwardQueue.length > 0) {
-            // TODO: Handle special actions such as forward
-            state.forwardQueue.forEach((a) => {
-                log.info({ timestamp: a.timestamp, action: a }, 'Forwarding');
-                state.masterSocket.emit('FORWARD', { timestamp: a.timestamp, action: a });
-            });
-            store.dispatch(actions_1.drainForwardQueue());
+        if (state != null) {
+            if (state.executionQueue.length > 0) {
+                state.executionQueue.forEach((a) => store.dispatch(actions_1.addToForwardQueue(a.timestamp, a)));
+                store.dispatch(actions_1.drainExecuteQueue());
+            }
+            if (state.forwardQueue.length > 0) {
+                state.forwardQueue.forEach((a) => {
+                    log.info({ timestamp: a.timestamp, action: a }, 'Forwarding');
+                    state.masterSocket.emit('FORWARD', { timestamp: a.timestamp, action: a });
+                });
+                store.dispatch(actions_1.drainForwardQueue());
+            }
         }
     });
     // Broadcast game updates to clients, buffered by every 1second
@@ -156,6 +174,7 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
         .do((states) => {
         if (states.length > 0) {
             syncIo.sockets.emit('SYNC', {
+                nextId: states[states.length - 1].nextId,
                 timestamp: states[states.length - 1].timestamp,
                 board: states[states.length - 1].board,
                 socketIdToUnitId: states[states.length - 1].socketIdToUnitId
@@ -188,11 +207,19 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
             log.info('Becoming Master');
             store.dispatch(actions_1.setSyncState(false, true));
             syncIo.on('connection', (socket) => {
-                log.info('Got connection from another server');
-                socket.on('FORWARD', ({ timestamp, gameAction }) => {
-                    if (!timestamp || !gameAction) { }
-                    else
-                        store.dispatch(actions_1.addToQueue(timestamp, gameAction));
+                log.info('Got connection from a slave server');
+                const state = store.getState();
+                if (state) {
+                    socket.emit('SYNC', {
+                        timestamp: state.timestamp,
+                        board: state.board,
+                        socketIdToUnitId: state.socketIdToUnitId
+                    });
+                }
+                socket.on('FORWARD', ({ timestamp, action }) => {
+                    if (timestamp && action) {
+                        store.dispatch(actions_1.addToQueue(timestamp, action));
+                    }
                 });
                 socket.on('disconnect', () => {
                     log.info('A slave server disconnected');
@@ -217,8 +244,8 @@ function gameServer(gameIo, syncIo, thisServer, mastersList) {
             io.on('connect', () => {
                 log.info({ master: nextMaster }, 'Connection made to master');
                 store.dispatch(actions_1.setSyncState(false, false, io));
-                io.on('SYNC', ({ timestamp, board, socketIdToUnitId }) => {
-                    store.dispatch(actions_1.masterServerSync(timestamp, board, socketIdToUnitId));
+                io.on('SYNC', ({ nextId, timestamp, board, socketIdToUnitId }) => {
+                    store.dispatch(actions_1.masterServerSync(nextId, timestamp, board, socketIdToUnitId));
                 });
                 io.on('ASSIGN_UNIT_ID', ({ socketId, unitId }) => {
                     if (gameIo.sockets.connected[socketId]) {

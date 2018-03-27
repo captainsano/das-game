@@ -140,7 +140,7 @@ export function stateReducer(state: GameState = INIT_STATE, action: GameAction |
                 prevBoardState: clone(state.board),
                 action: clone(action)
             }
-
+            
             if (state.socketIdToUnitId[socketId]) {
                 const location = findUnitInBoard(state.board, state.socketIdToUnitId[socketId])
                 if (location) {

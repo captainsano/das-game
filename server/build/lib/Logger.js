@@ -3,8 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const os = require("os");
 const bunyan_1 = require("bunyan");
 class Logger {
-    constructor() {
-    }
+    constructor() { }
     static configure(config) {
         Logger.config = config;
         Logger.instance = bunyan_1.createLogger({

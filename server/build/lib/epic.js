@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const rxjs_1 = require("rxjs");
 require("rxjs");
+const rxjs_1 = require("rxjs");
 const Logger_1 = require("./Logger");
 const log = Logger_1.Logger.getInstance('LoggerEpic');
 function epicFactory(gameIo, syncIo) {
