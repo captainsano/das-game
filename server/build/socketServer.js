@@ -15,6 +15,8 @@ const gameplay_1 = require("./loops/gameplay");
 const dragonAttack_1 = require("./loops/dragonAttack");
 const axios_1 = require("axios");
 const clientSocket = require("socket.io-client");
+const Logger_1 = require("./Logger");
+const log = Logger_1.Logger.getInstance('SocketServer');
 const createObservableFromSocketEvent = function createObservableFromSocketEvent(socket, eventName) {
     return rxjs_1.Observable.create((observer) => {
         const listener = (...args) => observer.next(args);
@@ -66,6 +68,7 @@ function socketServer(io, thisProcess, mastersList) {
                     const server = currentMasterList.shift();
                     currentMaster = server;
                     if (server === thisProcess) {
+                        log.info('Becoming a master');
                         isMaster = true;
                         // Take any item pending in forward queue and put it in primary queue
                         let m = forwardEventQueue.shift();
@@ -76,7 +79,7 @@ function socketServer(io, thisProcess, mastersList) {
                         return;
                     }
                     isMaster = false;
-                    console.log(`Evaluating: ${server}`);
+                    log.info({ server }, `Evaluating potential master`);
                     return rxjs_1.Observable
                         .interval(1000)
                         .startWith(0)
@@ -99,7 +102,7 @@ function socketServer(io, thisProcess, mastersList) {
                         if (!isMaster && server) {
                             const s = clientSocket.connect(`http://${server}`);
                             s.on('STATE_UPDATE', ({ board, timestamp }) => {
-                                // console.log('--> Got state update from server');
+                                log.info({ timestamp, board }, 'Got state update from master');
                                 gameState.setState(board, timestamp);
                             });
                             // Periodically forward events
@@ -108,9 +111,9 @@ function socketServer(io, thisProcess, mastersList) {
                                 .filter(() => currentMaster === server)
                                 .subscribe(() => {
                                 if (s.connected) {
-                                    // console.log('Forwarding to server: ', server);
                                     const m = forwardEventQueue.shift();
                                     if (m) {
+                                        log.info({ server }, 'Forwarding action to master');
                                         // Consider SPAWN_UNIT as a synchronous action
                                         if (m.action === 'SPAWN_UNIT') {
                                             s.emit('FORWARD', m, (unitId) => {
@@ -128,8 +131,7 @@ function socketServer(io, thisProcess, mastersList) {
                             });
                         }
                         else if (!server) {
-                            console.log('---> Running forward loop again');
-                            console.log(currentMasterList);
+                            log.info('Looking for masters');
                             forwardLoop();
                         }
                         return rxjs_1.Observable.empty();
@@ -137,7 +139,7 @@ function socketServer(io, thisProcess, mastersList) {
                         .subscribe();
                 }
                 else {
-                    console.log('---> No servers exist!');
+                    log.info('Exhausted masters list');
                     process.exit(0);
                 }
             };
@@ -149,6 +151,7 @@ function socketServer(io, thisProcess, mastersList) {
             createObservableFromSocketEvent(socket, 'FORWARD')
                 .filter(() => isMaster)
                 .do(([e, respond]) => {
+                log.info({ socketId: socket.id }, 'Got a new connection');
                 // Attach the synchronous responder in case of SPAWN_UNIT
                 if (e.action === 'SPAWN_UNIT') {
                     e.respond = respond;
@@ -160,6 +163,7 @@ function socketServer(io, thisProcess, mastersList) {
             // Connection from clients
             rxjs_1.Observable.merge(createObservableFromSocketEvent(socket, 'SPAWN')
                 .map(([, respond]) => {
+                log.info({ socketId: socket.id }, 'Got spawn request from client');
                 spawnResponders[socket.id] = respond;
                 (isMaster ? primaryEventQueue : forwardEventQueue).push({
                     action: 'SPAWN_UNIT',
@@ -171,6 +175,7 @@ function socketServer(io, thisProcess, mastersList) {
                 });
             }), createObservableFromSocketEvent(socket, 'RECONNECT')
                 .map(([{ id }, respond]) => {
+                log.info({ socketId: socket.id, unitId: id }, 'Got a reconnect request from client');
                 if (gameState.hasUnit(id)) {
                     respond && respond(null);
                 }
@@ -207,6 +212,7 @@ function socketServer(io, thisProcess, mastersList) {
                 });
             })
                 .takeUntil(createObservableFromSocketEvent(socket, 'disconnect')
+                .delay(10000)
                 .do(() => {
                 const action = { unitId: socket['unitId'] || -999, action: 'REMOVE_UNIT', timestamp: gameState.timestamp };
                 if (isMaster) {

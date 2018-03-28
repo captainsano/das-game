@@ -7,6 +7,9 @@ import { gameplay } from "./loops/gameplay";
 import { dragonAttack } from "./loops/dragonAttack";
 import axios from 'axios';
 import * as clientSocket from 'socket.io-client'
+import { Logger } from './Logger';
+
+const log = Logger.getInstance('SocketServer')
 
 const createObservableFromSocketEvent = function createObservableFromSocketEvent(socket: Socket, eventName: string): Observable<[ClientMessage, (Function | null)]> {
   return Observable.create((observer: Observer<any>) => {
@@ -66,6 +69,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
         currentMaster = server;
 
         if (server === thisProcess) {
+          log.info('Becoming a master')
           isMaster = true;
           // Take any item pending in forward queue and put it in primary queue
           let m = forwardEventQueue.shift();
@@ -77,7 +81,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
         }
 
         isMaster = false;
-        console.log(`Evaluating: ${server}`)
+        log.info({ server }, `Evaluating potential master`)
 
         return Observable
           .interval(1000)
@@ -100,7 +104,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
             if (!isMaster && server) {
               const s = clientSocket.connect(`http://${server}`);
               s.on('STATE_UPDATE', ({ board, timestamp }: { board: Board, timestamp: number }) => {
-                // console.log('--> Got state update from server');
+                log.info({ timestamp, board }, 'Got state update from master');
                 gameState.setState(board, timestamp);
               });
 
@@ -110,9 +114,9 @@ export default async function socketServer(io: Server, thisProcess: string, mast
                 .filter(() => currentMaster === server)
                 .subscribe(() => {
                   if (s.connected) {
-                    // console.log('Forwarding to server: ', server);
                     const m = forwardEventQueue.shift();
                     if (m) { 
+                      log.info({ server }, 'Forwarding action to master');
                       // Consider SPAWN_UNIT as a synchronous action
                       if (m.action === 'SPAWN_UNIT') {
                         s.emit('FORWARD', m, (unitId: number) => {
@@ -128,8 +132,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
                   }
                 })
             } else if (!server) {
-              console.log('---> Running forward loop again');
-              console.log(currentMasterList);
+              log.info('Looking for masters')
               forwardLoop();
             }
 
@@ -137,7 +140,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
           })
           .subscribe()
       } else {
-        console.log('---> No servers exist!');
+        log.info('Exhausted masters list')
         process.exit(0);
       }
 
@@ -152,6 +155,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
     createObservableFromSocketEvent(socket, 'FORWARD')
       .filter(() => isMaster)
       .do(([e, respond]) => {
+        log.info({socketId: socket.id}, 'Got a new connection')
         // Attach the synchronous responder in case of SPAWN_UNIT
         if (e.action === 'SPAWN_UNIT') {
           e.respond = respond
@@ -166,6 +170,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
     Observable.merge(
       createObservableFromSocketEvent(socket, 'SPAWN')
         .map(([, respond]) => {
+          log.info({ socketId: socket.id }, 'Got spawn request from client')
           spawnResponders[socket.id] = respond as Function
           (isMaster ? primaryEventQueue : forwardEventQueue).push({
             action: 'SPAWN_UNIT',
@@ -178,6 +183,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
         }),
       createObservableFromSocketEvent(socket, 'RECONNECT')
         .map(([{ id }, respond]) => {
+          log.info({ socketId: socket.id, unitId: id }, 'Got a reconnect request from client')
           if (gameState.hasUnit(id)) {
             respond && respond(null);
           } else {
@@ -216,6 +222,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
       })
       .takeUntil(
         createObservableFromSocketEvent(socket, 'disconnect')
+          .delay(10000)
           .do(() => {
             const action = { unitId: (socket as any)['unitId'] || -999, action: 'REMOVE_UNIT', timestamp: gameState.timestamp } as GameEvent
             if (isMaster) { primaryEventQueue.push(action) } else { forwardEventQueue.push(action) }

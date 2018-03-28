@@ -2,6 +2,9 @@ import { Observable } from 'rxjs/Observable';
 import { GameEvent, GAMEPLAY_INTERVAL, PlayerAttackEvent, SpawnUnitEvent, Board } from "../Types";
 import { GameState } from '../GameState'
 import { clone } from 'ramda'
+import { Logger } from '../Logger';
+
+const log = Logger.getInstance('GamePlay')
 
 interface StateSnapshot {
   timestamp: number,
@@ -11,37 +14,39 @@ interface StateSnapshot {
 
 const executeEvent = function executeEvent(nextEvent: GameEvent) {
   const gameState = GameState.getInstance();
+  log.info({ event: nextEvent, atTimestamp: gameState.timestamp }, `Executing event ${nextEvent.action} ${nextEvent.unitId}`)
+
   switch (nextEvent.action) {
     case 'UP': {
       const location = gameState.getUnitLocation(nextEvent.unitId);
       if (location) {
-        gameState.moveUnit([location[0], location[1]], [location[0], location[1] - 1]);
+        return gameState.moveUnit([location[0], location[1]], [location[0], location[1] - 1]);
       }
-      break;
+      break
     }
 
     case 'DOWN': {
       const location = gameState.getUnitLocation(nextEvent.unitId);
       if (location) {
-        gameState.moveUnit([location[0], location[1]], [location[0], location[1] + 1]);
+        return gameState.moveUnit([location[0], location[1]], [location[0], location[1] + 1]);
       }
-      break;
+      break
     }
 
     case 'RIGHT': {
       const location = gameState.getUnitLocation(nextEvent.unitId);
       if (location) {
-        gameState.moveUnit([location[0], location[1]], [location[0] + 1, location[1]]);
+        return gameState.moveUnit([location[0], location[1]], [location[0] + 1, location[1]]);
       }
-      break;
+      break
     }
 
     case 'LEFT': {
       const location = gameState.getUnitLocation(nextEvent.unitId);
       if (location) {
-        gameState.moveUnit([location[0], location[1]], [location[0] - 1, location[1]]);
+        return gameState.moveUnit([location[0], location[1]], [location[0] - 1, location[1]]);
       }
-      break;
+      break
     }
 
     case 'HEAL': {
@@ -50,10 +55,10 @@ const executeEvent = function executeEvent(nextEvent: GameEvent) {
         // Find another player unit clockwise from left at a distance of 2 to heal
         const nearest = gameState.findNearestUnitOfType(location, 5, 'player');
         if (nearest) {
-          gameState.healUnit(location, nearest);
+          return gameState.healUnit(location, nearest);
         }
       }
-      break;
+      break
     }
 
     case 'ATTACK': {
@@ -62,15 +67,14 @@ const executeEvent = function executeEvent(nextEvent: GameEvent) {
         // Find another player unit clockwise from left at a distance of 2 to heal
         const nearest = gameState.findNearestUnitOfType(location, 2, 'dragon');
         if (nearest) {
-          gameState.attackUnit(location, nearest);
+          return gameState.attackUnit(location, nearest);
         }
       }
-      break;
+      break
     }
 
     case 'PLAYER_ATTACK': {
-      gameState.attackUnit((nextEvent as PlayerAttackEvent).from, (nextEvent as PlayerAttackEvent).to);
-      break;
+      return gameState.attackUnit((nextEvent as PlayerAttackEvent).from, (nextEvent as PlayerAttackEvent).to);
     }
 
     case 'SPAWN_UNIT': {
@@ -78,14 +82,15 @@ const executeEvent = function executeEvent(nextEvent: GameEvent) {
       if ((nextEvent as SpawnUnitEvent).respond) {
         (nextEvent as SpawnUnitEvent).respond!(id);
       }
-      break;
+      break
     }
 
     case 'REMOVE_UNIT': {
-      gameState.removeUnit(nextEvent.unitId)
-      break;
+      return gameState.removeUnit(nextEvent.unitId)
     }
   }
+
+  return false
 }
 
 export function gameplay(getNextEvent: () => GameEvent | null) {
@@ -104,7 +109,9 @@ export function gameplay(getNextEvent: () => GameEvent | null) {
         executeEvent(nextEvent)
         replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent: clone(nextEvent) })
       } else {
-        console.log('--> Replaying due to stale timestamp', `Event TS: ${nextEvent.timestamp}`, ' ', `Current TS: ${gameState.timestamp}`);
+        log.info({eventTimestamp: nextEvent.timestamp, currentTimestamp: gameState.timestamp}, 'Replaying due to stale timestamp');
+        const currentBoard = clone(gameState.board)
+
         // Put next event in the appropriate place and start execution
         const eventsToExecute = replaySet.filter((e) => e.timestamp >= nextEvent.timestamp)
         if (eventsToExecute.length > 0) {
@@ -119,14 +126,29 @@ export function gameplay(getNextEvent: () => GameEvent | null) {
           replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent })
 
           // Replay other actions
+          let successfulExecutions = 0
           eventsToExecute.forEach((e) => {
             prevTimestamp = gameState.timestamp
             prevBoard = clone(gameState.board)
-            executeEvent(e.nextEvent)
+            if (executeEvent(e.nextEvent)) {
+              successfulExecutions += 1
+            }
             replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent })
           })
 
-          console.log('--> Done replaying')
+          const newBoard = clone(gameState.board)
+
+          // Log the replay summary
+          let diff = 0
+          for (let i = 0; i < newBoard.length; i++) {
+            for (let j = 0; j < newBoard.length; j++) {
+              if ((currentBoard[i][j] ? currentBoard[i][j]!.type : 'X') !== (newBoard[i][j] ? newBoard[i][j]!.type : 'Y'))  { 
+                diff += 1
+              }  
+            }
+          }
+
+          log.info({replayedEvents: eventsToExecute.length, currentTimestamp: gameState.timestamp, diffSquares: diff}, 'Done replaying events');
         }
       }
     });
