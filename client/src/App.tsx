@@ -80,21 +80,21 @@ class App extends React.Component {
             console.log(`---> Connected to: ${this.randomServer}`);
 
             this.setState({connected: true}, () => {
-                if (this.state.unitId === -1) {
-                    this.socket.emit('SPAWN', {}, (id: number) => {
-                        sessionStorage.setItem('UNIT_ID', id.toString());
-                        this.setState({unitId: id});
-                        this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
-                    });
-                } else {
-                    this.socket.emit('RECONNECT', {id: this.state.unitId}, (id: number | null) => {
-                        if (id) {
-                            sessionStorage.setItem('UNIT_ID', id.toString());
-                            this.setState({unitId: id});
-                            this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
-                        }
-                    });
-                }
+                // if (this.state.unitId === -1) {
+                //     this.socket.emit('SPAWN', {}, (id: number) => {
+                //         sessionStorage.setItem('UNIT_ID', id.toString());
+                //         this.setState({unitId: id});
+                //         this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
+                //     });
+                // } else {
+                //     this.socket.emit('RECONNECT', {id: this.state.unitId}, (id: number | null) => {
+                //         if (id) {
+                //             sessionStorage.setItem('UNIT_ID', id.toString());
+                //             this.setState({unitId: id});
+                //             this.socket.emit('MESSAGE', { action: 'PING', unitId: id, timestamp: this.state.timestamp })
+                //         }
+                //     });
+                // }
             });
 
             // Start listening to game state
@@ -157,10 +157,10 @@ class App extends React.Component {
 
         return (
             <div className="App">
-                <div>
+                {/* <div>
                     <h5 style={{marginBottom: '0.25em'}}>Controls:</h5>
                     <b>A</b> - Attack, <b>H</b> - Heal, <b>Up/Down/Left/Right</b> - Move
-                </div>
+                </div> */}
                 <br/>
                 <h4 style={{margin: '0.1em'}}>Connected?: {this.state.connected === true ? 'YES' : 'NO'} ({ this.randomServer })</h4>
                 <h4 style={{margin: '0.1em'}}>Timestamp: {this.state.timestamp}</h4>

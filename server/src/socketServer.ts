@@ -8,6 +8,7 @@ import { dragonAttack } from "./loops/dragonAttack";
 import axios from 'axios';
 import * as clientSocket from 'socket.io-client'
 import { Logger } from './Logger';
+import { PlayerUnit } from './Unit';
 
 const log = Logger.getInstance('SocketServer')
 
@@ -237,6 +238,32 @@ export default async function socketServer(io: Server, thisProcess: string, mast
 
   // AI gameplay (if current master)
   dragonAttack(() => isMaster, (e) => primaryEventQueue.push(e));
+
+  // Periodically cleanup the board for stale units that did not make any movements
+  let lastUnitPosition: {[unitId: number]: [number, number]} = {}
+  Observable.interval(10000)
+    .filter(() => isMaster)
+    .subscribe(() => {
+      log.info('Cleaning up disconnected stale units')
+      let unitsWithPosition: [number, [number, number]][] = [] 
+      for (let i = 0; i < gameState.board.length; i++) {
+        for (let j = 0; j < gameState.board.length; j++) {
+          if (gameState.board[i][j] && gameState.board[i][j]!.type === 'player') {
+            unitsWithPosition.push([gameState.board[i][j]!.id, [i, j]])
+          }
+        }
+      }
+      
+      // Remaining units, remove from the board
+      unitsWithPosition.forEach(([id, currentPosition]) => {
+        if (lastUnitPosition[id] && lastUnitPosition[id].toString() === currentPosition.toString()) {
+          log.info({ unitId: id }, 'Found a stale unit')
+          const e = { timestamp: gameState.timestamp, unitId: id, action: 'REMOVE_UNIT' } as GameEvent
+          primaryEventQueue.push(e)
+        }
+        lastUnitPosition[id] = currentPosition
+      })
+    })
 
   // Periodically broadcast the current game state to all the connected clients
   Observable.interval(GAMEPLAY_INTERVAL * 100)

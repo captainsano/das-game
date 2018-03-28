@@ -113,15 +113,15 @@ const shouldAttack = function shouldAttack(): boolean {
     return false;
 }
 
-const getNearestUnit = function getNearestUnit(type: 'dragon' | 'player'): [number, number] | null {
+const getNearestUnit = function getNearestUnit(type: 'dragon' | 'player', maxDistance: number): [number, number] | null {
     const location = getUnitLocation();
 
     if (location != null && state.board != null) {
         for (let i = 0; i < state.board.length; i++) {
             for (let j = 0; j < state.board.length; j++) {
-                if (state.board[i][j] != null && state.board[i][j]!.type === type) {
-                    if (type === 'dragon' && getDistance(location, [i, j]) <= 2) return [i, j]
-                    if (type === 'player' && getDistance(location, [i, j]) <= 5) return [i, j]
+                if (state.board[i][j] != null && state.board[i][j]!.type === type && [i, j].toString() !== location.toString()) {
+                    if (type === 'dragon' && getDistance(location, [i, j]) <= maxDistance) return [i, j]
+                    if (type === 'player' && getDistance(location, [i, j]) <= maxDistance) return [i, j]
                 }
             }
         }
@@ -177,27 +177,56 @@ Observable
 
         // Bot Logic!
         let action = null
+        const location = getUnitLocation()
         if (shouldAttack()) {
-            const nearestDragonLocation = getNearestUnit('dragon')
-            if (nearestDragonLocation) {
+            const nearestAttackableDragonLocation = getNearestUnit('dragon', 2)
+            if (nearestAttackableDragonLocation) {
                 action = actions[0]
             } else {
-                // Move randomly
-                action = actions[getRandomInt(2, actions.length - 1)]
-            }
+                // Move towards the nearest dragon
+                const nearestReachableDragonLocation = getNearestUnit('dragon', 13)
+                if (nearestReachableDragonLocation && location) {
+                    if (location![0] < nearestReachableDragonLocation![0]) {
+                        action = actions[4]
+                    } else if (location![0] > nearestReachableDragonLocation![0]) {
+                        action = actions[2]
+                    } else if (location![1] > nearestReachableDragonLocation![1]) {
+                        action = actions[3]
+                    } else {
+                        action = actions[5]
+                    }
+                } else {
+                    // Make some random movement
+                    action = actions[getRandomInt(2, actions.length - 1)]
+                }
+            } 
         } else {
-            const nearestPlayerLocation = getNearestUnit('player')
+            const nearestPlayerLocation = getNearestUnit('player', 5)
             if (nearestPlayerLocation && state.board![nearestPlayerLocation[0]][nearestPlayerLocation[1]]!.health < 7) {
                 // If the poor guy's health is < 50% then heal
                 action = actions[1]
             } else {
-                // Move randomly
-                action = actions[getRandomInt(2, actions.length - 1)]
+                // Move towards the player to heal
+                const nearestReachablePlayerLocation = getNearestUnit('player', 13)
+                if (nearestReachablePlayerLocation && location) {
+                    if (location![0] < nearestReachablePlayerLocation![0]) {
+                        action = actions[4]
+                    } else if (location![0] > nearestReachablePlayerLocation![0]) {
+                        action = actions[2]
+                    } else if (location![1] > nearestReachablePlayerLocation![1]) {
+                        action = actions[3]
+                    } else {
+                        action = actions[5]
+                    }
+                } else {
+                    // Make some random movement
+                    action = actions[getRandomInt(2, actions.length - 1)]
+                }
             }
         }
 
         if (action) {
-            // console.log('---> ACTION: ', action)
+            console.log('---> ACTION: ', action)
             socket.emit('MESSAGE', action)
         }
     });

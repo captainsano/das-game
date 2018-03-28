@@ -229,6 +229,30 @@ function socketServer(io, thisProcess, mastersList) {
         gameplay_1.gameplay(() => primaryEventQueue.shift());
         // AI gameplay (if current master)
         dragonAttack_1.dragonAttack(() => isMaster, (e) => primaryEventQueue.push(e));
+        // Periodically cleanup the board for stale units that did not make any movements
+        let lastUnitPosition = {};
+        rxjs_1.Observable.interval(10000)
+            .filter(() => isMaster)
+            .subscribe(() => {
+            log.info('Cleaning up disconnected stale units');
+            let unitsWithPosition = [];
+            for (let i = 0; i < gameState.board.length; i++) {
+                for (let j = 0; j < gameState.board.length; j++) {
+                    if (gameState.board[i][j] && gameState.board[i][j].type === 'player') {
+                        unitsWithPosition.push([gameState.board[i][j].id, [i, j]]);
+                    }
+                }
+            }
+            // Remaining units, remove from the board
+            unitsWithPosition.forEach(([id, currentPosition]) => {
+                if (lastUnitPosition[id] && lastUnitPosition[id].toString() === currentPosition.toString()) {
+                    log.info({ unitId: id }, 'Found a stale unit');
+                    const e = { timestamp: gameState.timestamp, unitId: id, action: 'REMOVE_UNIT' };
+                    primaryEventQueue.push(e);
+                }
+                lastUnitPosition[id] = currentPosition;
+            });
+        });
         // Periodically broadcast the current game state to all the connected clients
         rxjs_1.Observable.interval(Types_1.GAMEPLAY_INTERVAL * 100)
             .subscribe(() => {

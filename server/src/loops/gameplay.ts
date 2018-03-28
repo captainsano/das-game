@@ -103,7 +103,7 @@ export function gameplay(getNextEvent: () => GameEvent | null) {
       const nextEvent = getNextEvent();
       if (!nextEvent) return;
 
-      if (gameState.timestamp - nextEvent.timestamp <= 25) {
+      if (gameState.timestamp - nextEvent.timestamp <= 10) {
         const prevTimestamp = gameState.timestamp
         const prevBoard = clone(gameState.board) 
         executeEvent(nextEvent)
