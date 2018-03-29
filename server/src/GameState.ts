@@ -202,6 +202,7 @@ export class GameState {
       for (let j = 0; j < BOARD_SIZE; j++) {
         if (this._board[i][j] && this._board[i][j]!.id === unitId) {
           this._board[i][j] = null
+          this.incrementTimestamp();
           return true
         }
       }
