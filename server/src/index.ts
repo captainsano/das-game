@@ -36,6 +36,14 @@ for (let i = 0; i + 1 < process.argv.length; i++) {
   }
 }
 
+if (!thisProcess) {
+  thisProcess = 'localhost:8000'
+}
+
+if (masterProcesses.length === 0) {
+  masterProcesses = ['localhost:8000']
+}
+
 // Wait for sometime to settle other processes start
 setTimeout(() => {
   log.info('Starting socket server')

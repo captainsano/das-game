@@ -1,6 +1,6 @@
-// Utility functions
-import { Unit } from './Unit';
-import { Board, Square } from "./Types";
+import { Unit } from './Unit'
+import { Board, Square } from './Types'
+import { clone } from 'ramda'
 
 /* Utility functions */
 export function damage(unit: Unit, points: number) {
@@ -74,33 +74,64 @@ const moveUnit = function moveUnit(board: Board, [x1, y1]: Square, [x2, y2]: Squ
   return false;
 };
 
+export function printBoard(board: Board) {
+  for (let i = 0; i < BOARD_SIZE; i++) {
+    let line = ''
+    for (let j = 0; j < BOARD_SIZE; j++) {
+      if (board[i][j]) {
+        line += ` ${board[i][j]!.type === 'dragon' ? 'D' : 'K'} `
+      } else {
+        line += ` . `
+      }
+    }
+    console.log(`${line}`)
+  }
+}
+
 interface Snapshot {
   timestamp: number,
   board: Board,
 }
 
-const BOARD_SIZE = 25;
+const BOARD_SIZE = 25
 
 /**
  * Represents the game state
  */
 export class GameState {
-  private static instance: GameState | null = null;
+  private static instance: GameState | null = null
 
-  private _timestamp = 0;
-  private _board: Board = [];
-  private nextId = 1;
+  private _timestamp = 0
+  private _board: Board = []
+  private _replaying: boolean = false
+  private nextId = 1
 
   get board() {
-    return [...this._board];
+    return clone(this._board)
   }
 
   get timestamp() {
-    return this._timestamp;
+    return this._timestamp
+  }
+
+  get replaying() {
+    return this._replaying
+  }
+
+  set replaying(replaying: boolean) {
+    this._replaying = replaying
   }
 
   setState(board: Board, timestamp: number) {
-    this._board = board;
+    for (let i = 0; i < BOARD_SIZE; i++) {
+      for (let j = 0; j < BOARD_SIZE; j++) {
+        if (board[i][j]) {
+          this._board[i][j] = { ...board[i][j] } as Unit
+        } else {
+          this._board[i][j] = null
+        }
+      }
+    }
     this._timestamp = timestamp;
   }
 
@@ -166,14 +197,16 @@ export class GameState {
    * Remove a unit from the board
    * @param unitId The unit id to remove
    */
-  removeUnit(unitId: number) {
+  removeUnit(unitId: number): boolean {
     for (let i = 0; i < BOARD_SIZE; i++) {
       for (let j = 0; j < BOARD_SIZE; j++) {
-        if (this.board[i][j] && this.board[i][j]!.id === unitId) {
-          this.board[i][j] = null
+        if (this._board[i][j] && this._board[i][j]!.id === unitId) {
+          this._board[i][j] = null
+          return true
         }
       }
     }
+    return false
   }
 
   getDragonCount(): number {
@@ -214,7 +247,7 @@ export class GameState {
    * Move the unit id to a new location. Updates the game state and timestamp
    */
   moveUnit(from: Square, to: Square): boolean {
-    if (moveUnit(this.board, from, to)) {
+    if (moveUnit(this._board, from, to)) {
       this.incrementTimestamp();
       return true;
     }
@@ -240,7 +273,7 @@ export class GameState {
       return false;
     }
 
-    this.board[to[0]][to[1]] = heal(this.board[to[0]][to[1]]!, this.board[from[0]][from[1]]!.attack);
+    this._board[to[0]][to[1]] = heal(this.board[to[0]][to[1]]!, this.board[from[0]][from[1]]!.attack);
 
     this.incrementTimestamp();
     return true;
@@ -266,7 +299,7 @@ export class GameState {
     }
 
     const newUnit = damage(this.board[to[0]][to[1]]!, this.board[from[0]][from[1]]!.attack);
-    this.board[to[0]][to[1]] = newUnit.health <= 0 ? null : newUnit;
+    this._board[to[0]][to[1]] = newUnit.health <= 0 ? null : newUnit;
 
     this.incrementTimestamp();
     return true;
@@ -303,5 +336,15 @@ export class GameState {
         return [randomX, randomY];
       }
     }
+  }
+
+  /**
+   * Print the board state in ASCII for debug purpose
+   */
+  print() {
+    console.log()
+    console.log('--> Timestamp: ', this.timestamp)
+    printBoard(this.board)
+    console.log()
   }
 }

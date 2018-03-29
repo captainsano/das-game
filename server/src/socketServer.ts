@@ -155,13 +155,14 @@ export default async function socketServer(io: Server, thisProcess: string, mast
     // Connection from other servers
     createObservableFromSocketEvent(socket, 'FORWARD')
       .filter(() => isMaster)
+      .filter(() => !gameState.replaying)
       .do(([e, respond]) => {
         log.info({socketId: socket.id}, 'Got a new connection')
         // Attach the synchronous responder in case of SPAWN_UNIT
         if (e.action === 'SPAWN_UNIT') {
           e.respond = respond
         }
-         
+        
         primaryEventQueue.push(e as GameEvent)
       })
       .takeUntil(createObservableFromSocketEvent(socket, 'disconnect'))
@@ -214,7 +215,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
             }
 
             // Process events if master, else forward
-            if (isMaster) {
+            if (isMaster && !gameState.replaying) {
               primaryEventQueue.push({ unitId, action, timestamp } as GameEvent)
             } else {
               forwardEventQueue.push({ unitId, action, timestamp } as GameEvent)
@@ -244,7 +245,6 @@ export default async function socketServer(io: Server, thisProcess: string, mast
   Observable.interval(10000)
     .filter(() => isMaster)
     .subscribe(() => {
-      log.info('Cleaning up disconnected stale units')
       let unitsWithPosition: [number, [number, number]][] = [] 
       for (let i = 0; i < gameState.board.length; i++) {
         for (let j = 0; j < gameState.board.length; j++) {
@@ -267,6 +267,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
 
   // Periodically broadcast the current game state to all the connected clients
   Observable.interval(GAMEPLAY_INTERVAL * 100)
+    .filter(() => !gameState.replaying)
     .subscribe(() => {
       io.sockets.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
     });

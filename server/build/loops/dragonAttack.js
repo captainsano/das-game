@@ -30,3 +30,4 @@ function dragonAttack(isMaster, addToPrimaryQueue) {
     });
 }
 exports.dragonAttack = dragonAttack;
+//# sourceMappingURL=dragonAttack.js.map

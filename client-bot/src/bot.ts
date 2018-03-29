@@ -9,10 +9,10 @@ export function getRandomInt(min: number, max: number): number {
 
 const servers = [
     'localhost:8000',
-    'localhost:8001',
-    'localhost:8002',
-    'localhost:8003',
-    'localhost:8004',
+//    'localhost:8001',
+//    'localhost:8002',
+//    'localhost:8003',
+//    'localhost:8004',
 ]
 
 let randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;
@@ -206,14 +206,14 @@ Observable
                 // If the poor guy's health is < 50% then heal
                 action = actions[1]
             } else {
-                // Move towards the player to heal
-                const nearestReachablePlayerLocation = getNearestUnit('player', 13)
-                if (nearestReachablePlayerLocation && location) {
-                    if (location![0] < nearestReachablePlayerLocation![0]) {
+                // Move towards the nearest dragon
+                const nearestReachableDragonLocation = getNearestUnit('dragon', 13)
+                if (nearestReachableDragonLocation && location) {
+                    if (location![0] < nearestReachableDragonLocation![0]) {
                         action = actions[4]
-                    } else if (location![0] > nearestReachablePlayerLocation![0]) {
+                    } else if (location![0] > nearestReachableDragonLocation![0]) {
                         action = actions[2]
-                    } else if (location![1] > nearestReachablePlayerLocation![1]) {
+                    } else if (location![1] > nearestReachableDragonLocation![1]) {
                         action = actions[3]
                     } else {
                         action = actions[5]

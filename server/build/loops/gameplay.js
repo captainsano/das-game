@@ -68,7 +68,7 @@ const executeEvent = function executeEvent(nextEvent) {
             if (nextEvent.respond) {
                 nextEvent.respond(id);
             }
-            break;
+            return true;
         }
         case 'REMOVE_UNIT': {
             return gameState.removeUnit(nextEvent.unitId);
@@ -85,13 +85,22 @@ function gameplay(getNextEvent) {
         const nextEvent = getNextEvent();
         if (!nextEvent)
             return;
-        if (gameState.timestamp - nextEvent.timestamp <= 10) {
+        if (gameState.timestamp - nextEvent.timestamp <= 25) {
             const prevTimestamp = gameState.timestamp;
             const prevBoard = ramda_1.clone(gameState.board);
             executeEvent(nextEvent);
             replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent: ramda_1.clone(nextEvent) });
         }
         else {
+            // Do the actual thing
+            const stateBackup = (() => {
+                const prevTimestamp = gameState.timestamp;
+                const prevBoard = ramda_1.clone(gameState.board);
+                executeEvent(nextEvent);
+                replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent: ramda_1.clone(nextEvent) });
+                return [ramda_1.clone(gameState.board), gameState.timestamp];
+            })();
+            gameState.replaying = true;
             log.info({ eventTimestamp: nextEvent.timestamp, currentTimestamp: gameState.timestamp }, 'Replaying due to stale timestamp');
             const currentBoard = ramda_1.clone(gameState.board);
             // Put next event in the appropriate place and start execution
@@ -113,21 +122,35 @@ function gameplay(getNextEvent) {
                     if (executeEvent(e.nextEvent)) {
                         successfulExecutions += 1;
                     }
-                    replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent });
+                    replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent: e.nextEvent });
                 });
                 const newBoard = ramda_1.clone(gameState.board);
                 // Log the replay summary
                 let diff = 0;
                 for (let i = 0; i < newBoard.length; i++) {
                     for (let j = 0; j < newBoard.length; j++) {
-                        if ((currentBoard[i][j] ? currentBoard[i][j].type : 'X') !== (newBoard[i][j] ? newBoard[i][j].type : 'Y')) {
+                        if ((currentBoard[i][j] ? currentBoard[i][j].type : 'X') !== (newBoard[i][j] ? newBoard[i][j].type : 'X')) {
                             diff += 1;
                         }
                     }
                 }
                 log.info({ replayedEvents: eventsToExecute.length, currentTimestamp: gameState.timestamp, diffSquares: diff }, 'Done replaying events');
+                // Clear replay set if too much is in there
+                if (replaySet.length > 50) {
+                    replaySet.length = 0;
+                }
+                gameState.setState(stateBackup[0], stateBackup[1]);
             }
+            else {
+                log.info('Sufficient replay state not found to rollback. Making best effort execution');
+                const prevTimestamp = gameState.timestamp;
+                const prevBoard = ramda_1.clone(gameState.board);
+                executeEvent(nextEvent);
+                replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent: ramda_1.clone(nextEvent) });
+            }
+            gameState.replaying = false;
         }
     });
 }
 exports.gameplay = gameplay;
+//# sourceMappingURL=gameplay.js.map

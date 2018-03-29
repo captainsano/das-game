@@ -51,16 +51,7 @@ class BoardComponent extends React.Component<Props> {
                     return null;
                 })();
 
-                const innerCircle = unit && unit.id === this.props.currentPlayerId ? (
-                    <circle
-                        cx={x + SQUARE_PIXEL_SIZE * 0.5}
-                        cy={y + SQUARE_PIXEL_SIZE * 0.5}
-                        r={SQUARE_PIXEL_SIZE * 0.25}
-                        fill="#777777"
-                    />
-                ) : null;
-
-                return <g key={j}>{unitRect}{innerCircle}</g>;
+                return <g key={j}>{unitRect}</g>;
             });
 
             return <g key={i}>{rowElems}</g>;

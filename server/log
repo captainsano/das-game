@@ -1,0 +1,584 @@
+
+> server@1.0.0 start0 /Users/santhosbaala/Desktop/das-game/server
+> SERVER_PORT=8000 node build/index.js -t localhost:8000 -m localhost:8000,localhost:8001,localhost:8002,localhost:8003,localhost:8004
+
+[Wed, 28 Mar 2018 22:42:21 GMT] [36m[INFO][39m: [36mServer started[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mStarting socket server[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mReplaying due to stale timestamp[39m
+---> Before rolling back
+
+--> Timestamp:  11
+ D  .  .  D  .  .  D  .  D  . 
+ D  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  D  D  .  . 
+ .  .  D  .  .  D  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ D  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> After rolling back
+
+--> Timestamp:  0
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> Reset game state
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+---> Will now execute 11 events
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+--> After replay
+
+--> Timestamp:  12
+ D  .  .  D  .  .  D  .  D  . 
+ D  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  D  D  .  . 
+ .  .  D  .  .  D  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ D  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  D 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+{ replayedEvents: 11, currentTimestamp: 12, diffSquares: 89 } 'Done replaying events'
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mDone replaying events[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mReplaying due to stale timestamp[39m
+---> Before rolling back
+
+--> Timestamp:  12
+ D  .  .  D  .  .  D  .  D  . 
+ D  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  D  D  .  . 
+ .  .  D  .  .  D  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ D  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  D 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> After rolling back
+
+--> Timestamp:  0
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> Reset game state
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+---> Will now execute 12 events
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+--> After replay
+
+--> Timestamp:  13
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  D 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  D  .  .  . 
+
+{ replayedEvents: 12, currentTimestamp: 13, diffSquares: 99 } 'Done replaying events'
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mDone replaying events[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mReplaying due to stale timestamp[39m
+---> Before rolling back
+
+--> Timestamp:  13
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  D 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  D  .  .  . 
+
+---> After rolling back
+
+--> Timestamp:  0
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> Reset game state
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+---> Will now execute 13 events
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+--> After replay
+
+--> Timestamp:  14
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  D  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  D  .  .  . 
+
+{ replayedEvents: 13, currentTimestamp: 14, diffSquares: 99 } 'Done replaying events'
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mDone replaying events[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mReplaying due to stale timestamp[39m
+---> Before rolling back
+
+--> Timestamp:  14
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  D  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  D  .  .  . 
+
+---> After rolling back
+
+--> Timestamp:  0
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> Reset game state
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+---> Will now execute 14 events
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+--> After replay
+
+--> Timestamp:  15
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  D  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+{ replayedEvents: 14, currentTimestamp: 15, diffSquares: 99 } 'Done replaying events'
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mDone replaying events[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mReplaying due to stale timestamp[39m
+---> Before rolling back
+
+--> Timestamp:  15
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  D  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> After rolling back
+
+--> Timestamp:  0
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> Reset game state
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+---> Will now execute 15 events
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+--> After replay
+
+--> Timestamp:  16
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  D  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+{ replayedEvents: 15, currentTimestamp: 16, diffSquares: 99 } 'Done replaying events'
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mDone replaying events[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mReplaying due to stale timestamp[39m
+---> Before rolling back
+
+--> Timestamp:  16
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  D  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> After rolling back
+
+--> Timestamp:  0
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> Reset game state
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+---> Will now execute 16 events
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+--> After replay
+
+--> Timestamp:  17
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  D  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+{ replayedEvents: 16, currentTimestamp: 17, diffSquares: 99 } 'Done replaying events'
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mDone replaying events[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mReplaying due to stale timestamp[39m
+---> Before rolling back
+
+--> Timestamp:  17
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  D  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> After rolling back
+
+--> Timestamp:  0
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> Reset game state
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+---> Will now execute 17 events
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+--> After replay
+
+--> Timestamp:  18
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  D  .  .  .  .  .  .  . 
+
+{ replayedEvents: 17, currentTimestamp: 18, diffSquares: 99 } 'Done replaying events'
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mDone replaying events[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mReplaying due to stale timestamp[39m
+---> Before rolling back
+
+--> Timestamp:  18
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  D  .  .  .  .  .  .  . 
+
+---> After rolling back
+
+--> Timestamp:  0
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> Reset game state
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+---> Will now execute 18 events
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+--> After replay
+
+--> Timestamp:  19
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  D  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  D  .  .  .  .  .  .  . 
+
+{ replayedEvents: 18, currentTimestamp: 19, diffSquares: 99 } 'Done replaying events'
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mDone replaying events[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mReplaying due to stale timestamp[39m
+---> Before rolling back
+
+--> Timestamp:  19
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  D  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  D  .  .  .  .  .  .  . 
+
+---> After rolling back
+
+--> Timestamp:  0
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+---> Reset game state
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+---> Will now execute 19 events
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mExecuting event SPAWN_UNIT -1[39m
+--> After replay
+
+--> Timestamp:  20
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  D  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  D  .  . 
+ .  .  .  .  .  .  .  .  .  . 
+
+{ replayedEvents: 19, currentTimestamp: 20, diffSquares: 99 } 'Done replaying events'
+[Wed, 28 Mar 2018 22:42:26 GMT] [36m[INFO][39m: [36mDone replaying events[39m

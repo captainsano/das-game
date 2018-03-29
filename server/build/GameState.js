@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const ramda_1 = require("ramda");
 /* Utility functions */
 function damage(unit, points) {
     return Object.assign({}, unit, { health: Math.max(0, unit.health - points) });
@@ -64,6 +65,21 @@ const moveUnit = function moveUnit(board, [x1, y1], [x2, y2]) {
     }
     return false;
 };
+function printBoard(board) {
+    for (let i = 0; i < BOARD_SIZE; i++) {
+        let line = '';
+        for (let j = 0; j < BOARD_SIZE; j++) {
+            if (board[i][j]) {
+                line += ` ${board[i][j].type === 'dragon' ? 'D' : 'K'} `;
+            }
+            else {
+                line += ` . `;
+            }
+        }
+        console.log(`${line}`);
+    }
+}
+exports.printBoard = printBoard;
 const BOARD_SIZE = 25;
 /**
  * Represents the game state
@@ -72,6 +88,7 @@ class GameState {
     constructor() {
         this._timestamp = 0;
         this._board = [];
+        this._replaying = false;
         this.nextId = 1;
         // Array of boards to maintain the state
         this.snapshots = [];
@@ -83,13 +100,28 @@ class GameState {
         }
     }
     get board() {
-        return [...this._board];
+        return ramda_1.clone(this._board);
     }
     get timestamp() {
         return this._timestamp;
     }
+    get replaying() {
+        return this._replaying;
+    }
+    set replaying(replaying) {
+        this._replaying = replaying;
+    }
     setState(board, timestamp) {
-        this._board = board;
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            for (let j = 0; j < BOARD_SIZE; j++) {
+                if (board[i][j]) {
+                    this._board[i][j] = Object.assign({}, board[i][j]);
+                }
+                else {
+                    this._board[i][j] = null;
+                }
+            }
+        }
         this._timestamp = timestamp;
     }
     incrementTimestamp() {
@@ -137,11 +169,13 @@ class GameState {
     removeUnit(unitId) {
         for (let i = 0; i < BOARD_SIZE; i++) {
             for (let j = 0; j < BOARD_SIZE; j++) {
-                if (this.board[i][j] && this.board[i][j].id === unitId) {
-                    this.board[i][j] = null;
+                if (this._board[i][j] && this._board[i][j].id === unitId) {
+                    this._board[i][j] = null;
+                    return true;
                 }
             }
         }
+        return false;
     }
     getDragonCount() {
         let dragonCount = 0;
@@ -177,7 +211,7 @@ class GameState {
      * Move the unit id to a new location. Updates the game state and timestamp
      */
     moveUnit(from, to) {
-        if (moveUnit(this.board, from, to)) {
+        if (moveUnit(this._board, from, to)) {
             this.incrementTimestamp();
             return true;
         }
@@ -198,7 +232,7 @@ class GameState {
         if (getDistance(from, to) > 5) {
             return false;
         }
-        this.board[to[0]][to[1]] = heal(this.board[to[0]][to[1]], this.board[from[0]][from[1]].attack);
+        this._board[to[0]][to[1]] = heal(this.board[to[0]][to[1]], this.board[from[0]][from[1]].attack);
         this.incrementTimestamp();
         return true;
     }
@@ -219,7 +253,7 @@ class GameState {
             return false;
         }
         const newUnit = damage(this.board[to[0]][to[1]], this.board[from[0]][from[1]].attack);
-        this.board[to[0]][to[1]] = newUnit.health <= 0 ? null : newUnit;
+        this._board[to[0]][to[1]] = newUnit.health <= 0 ? null : newUnit;
         this.incrementTimestamp();
         return true;
     }
@@ -252,6 +286,16 @@ class GameState {
             }
         }
     }
+    /**
+     * Print the board state in ASCII for debug purpose
+     */
+    print() {
+        console.log();
+        console.log('--> Timestamp: ', this.timestamp);
+        printBoard(this.board);
+        console.log();
+    }
 }
 GameState.instance = null;
 exports.GameState = GameState;
+//# sourceMappingURL=GameState.js.map
