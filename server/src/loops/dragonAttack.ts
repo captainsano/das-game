@@ -6,7 +6,7 @@ export function dragonAttack(isMaster: () => boolean, addToPrimaryQueue: (event:
   const gameState = GameState.getInstance();
 
   // Dragon attack game event loop
-  Observable.interval(GAMEPLAY_INTERVAL * 1000)
+  Observable.interval(GAMEPLAY_INTERVAL * 5000)
     .filter(() => isMaster())
     .subscribe(() => {
       // For each dragon, find nearest player and attack
