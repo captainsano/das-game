@@ -32,7 +32,7 @@ rd.on('close', () => {
     // Scale the schedule to suitable bot intervals
     const sortedSchedule = R.filter(({lifetime}) => lifetime > 0, R.sortBy(R.prop('timestamp'), R.map((x) => ({ ...x, lifetime: x.lifetime * 5 * 10 }), schedule)))
     const FIRST_TS = sortedSchedule[0].timestamp
-    const finalSchedule = R.map((x) => ({...x, timestamp: (x.timestamp - FIRST_TS) / 5}), sortedSchedule)
+    const finalSchedule = R.map((x) => ({...x, timestamp: (x.timestamp - FIRST_TS) / 10}), sortedSchedule)
 
     finalSchedule.forEach(({timestamp, lifetime}, i) => {
         setTimeout(() => {

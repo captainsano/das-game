@@ -6,6 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon",
+    "start-local0": "./node_modules/.bin/tsc && rm -rf server-*.log && SERVER_PORT=8000 node build/index.js -t localhost:8000 -m localhost:8000,localhost:8001,localhost:8002,localhost:8003,localhost:8004",
+    "start-local1": "./node_modules/.bin/tsc && rm -rf server-*.log && SERVER_PORT=8001 node build/index.js -t localhost:8001 -m localhost:8000,localhost:8001,localhost:8002,localhost:8003,localhost:8004",
+    "start-local2": "./node_modules/.bin/tsc && rm -rf server-*.log && SERVER_PORT=8002 node build/index.js -t localhost:8002 -m localhost:8000,localhost:8001,localhost:8002,localhost:8003,localhost:8004",
+    "start-local3": "./node_modules/.bin/tsc && rm -rf server-*.log && SERVER_PORT=8003 node build/index.js -t localhost:8003 -m localhost:8000,localhost:8001,localhost:8002,localhost:8003,localhost:8004",
+    "start-local4": "./node_modules/.bin/tsc && rm -rf server-*.log && SERVER_PORT=8004 node build/index.js -t localhost:8004 -m localhost:8000,localhost:8001,localhost:8002,localhost:8003,localhost:8004",
     "start0": "./node_modules/.bin/tsc && rm -rf server-*.log && SERVER_PORT=8000 node build/index.js -t ec2-54-173-107-234.compute-1.amazonaws.com:8000 -m ec2-54-173-107-234.compute-1.amazonaws.com:8000,ec2-54-152-208-227.compute-1.amazonaws.com:8001,ec2-54-234-102-60.compute-1.amazonaws.com:8002,ec2-54-85-168-103.compute-1.amazonaws.com:8003,ec2-34-238-171-163.compute-1.amazonaws.com:8004",
     "start1": "./node_modules/.bin/tsc && rm -rf server-*.log && SERVER_PORT=8001 node build/index.js -t ec2-54-152-208-227.compute-1.amazonaws.com:8001 -m ec2-54-173-107-234.compute-1.amazonaws.com:8000,ec2-54-152-208-227.compute-1.amazonaws.com:8001,ec2-54-234-102-60.compute-1.amazonaws.com:8002,ec2-54-85-168-103.compute-1.amazonaws.com:8003,ec2-34-238-171-163.compute-1.amazonaws.com:8004",
     "start2": "./node_modules/.bin/tsc && rm -rf server-*.log && SERVER_PORT=8002 node build/index.js -t ec2-54-234-102-60.compute-1.amazonaws.com:8002 -m ec2-54-173-107-234.compute-1.amazonaws.com:8000,ec2-54-152-208-227.compute-1.amazonaws.com:8001,ec2-54-234-102-60.compute-1.amazonaws.com:8002,ec2-54-85-168-103.compute-1.amazonaws.com:8003,ec2-34-238-171-163.compute-1.amazonaws.com:8004",

@@ -108,17 +108,7 @@ export function gameplay(getNextEvent: () => GameEvent | null) {
         const prevBoard = clone(gameState.board) 
         executeEvent(nextEvent)
         replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent: clone(nextEvent) })
-      } else {
-        // Do the actual thing
-        const stateBackup = (() => {
-          const prevTimestamp = gameState.timestamp
-          const prevBoard = clone(gameState.board) 
-          executeEvent(nextEvent)
-          replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent: clone(nextEvent) })
-
-          return [clone(gameState.board), gameState.timestamp]
-        })()
-        
+      } else if (gameState.timestamp - nextEvent.timestamp <= 500) {
         gameState.replaying = true
         log.info({eventTimestamp: nextEvent.timestamp, currentTimestamp: gameState.timestamp}, 'Replaying due to stale timestamp');
         const currentBoard = clone(gameState.board)
@@ -159,13 +149,6 @@ export function gameplay(getNextEvent: () => GameEvent | null) {
             }
           }
           log.info({replayedEvents: eventsToExecute.length, currentTimestamp: gameState.timestamp, diffSquares: diff}, 'Done replaying events');
-          
-          // Clear replay set if too much is in there
-          if (replaySet.length > 50) {
-            replaySet.length = 0
-          }
-
-          gameState.setState(stateBackup[0] as Board, stateBackup[1] as number)
         } else {
           log.info('Sufficient replay state not found to rollback. Making best effort execution')
           const prevTimestamp = gameState.timestamp

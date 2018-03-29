@@ -85,7 +85,7 @@ function gameplay(getNextEvent) {
         const nextEvent = getNextEvent();
         if (!nextEvent)
             return;
-        if (gameState.timestamp - nextEvent.timestamp <= 25) {
+        if (gameState.timestamp - nextEvent.timestamp <= 10) {
             const prevTimestamp = gameState.timestamp;
             const prevBoard = ramda_1.clone(gameState.board);
             executeEvent(nextEvent);
