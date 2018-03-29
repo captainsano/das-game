@@ -9,11 +9,7 @@ export function getRandomInt(min: number, max: number): number {
 }
 
 const servers = [
-    'localhost:8000',
-    // 'localhost:8001',
-    // 'localhost:8002',
-    // 'localhost:8003',
-    // 'localhost:8004',
+    'ec2-34-238-171-163.compute-1.amazonaws.com:8004'
 ];
 
 class App extends React.Component {
