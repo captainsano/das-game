@@ -148,6 +148,7 @@ function socketServer(io, thisProcess, mastersList) {
         }
         // Handle client connection (new and reconnection)
         io.on('connection', (socket) => {
+            log.info('Got a new connection');
             // Connection from other servers
             createObservableFromSocketEvent(socket, 'FORWARD')
                 .filter(() => isMaster)

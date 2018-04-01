@@ -153,6 +153,8 @@ export default async function socketServer(io: Server, thisProcess: string, mast
 
   // Handle client connection (new and reconnection)
   io.on('connection', (socket) => {
+    log.info('Got a new connection')
+
     // Connection from other servers
     createObservableFromSocketEvent(socket, 'FORWARD')
       .filter(() => isMaster)

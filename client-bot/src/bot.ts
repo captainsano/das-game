@@ -8,11 +8,12 @@ export function getRandomInt(min: number, max: number): number {
 }
 
 const servers = [
-    'ec2-54-173-107-234.compute-1.amazonaws.com:8000',
-    'ec2-54-152-208-227.compute-1.amazonaws.com:8001',
-    'ec2-54-234-102-60.compute-1.amazonaws.com:8002',
-    'ec2-54-85-168-103.compute-1.amazonaws.com:8003',
-    'ec2-34-238-171-163.compute-1.amazonaws.com:8004'
+    'localhost:8000',
+    // 'ec2-54-173-107-234.compute-1.amazonaws.com:8000',
+    // 'ec2-54-152-208-227.compute-1.amazonaws.com:8001',
+    // 'ec2-54-234-102-60.compute-1.amazonaws.com:8002',
+    // 'ec2-54-85-168-103.compute-1.amazonaws.com:8003',
+    // 'ec2-34-238-171-163.compute-1.amazonaws.com:8004'
 ]
 
 let randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;
@@ -149,87 +150,87 @@ const getDragonsCount = function getDragonsCount(): number | null {
 };
 
 // Game loop
-Observable
-    .interval(1500)
-    // Do not send actions until connected or unitId is allocated
-    .filter(() => state.connected)
-    .filter(() => state.unitId !== -1)
-    .subscribe(() => {
-        if (!isAlive()) {
-            console.log('---> Am dead!')
-            process.exit(0);
-        }
+// Observable
+//     .interval(1500)
+//     // Do not send actions until connected or unitId is allocated
+//     .filter(() => state.connected)
+//     .filter(() => state.unitId !== -1)
+//     .subscribe(() => {
+//         if (!isAlive()) {
+//             console.log('---> Am dead!')
+//             process.exit(0);
+//         }
 
-        const dragonsCount = getDragonsCount();
-        if (dragonsCount != null && dragonsCount === 0 && state.timestamp > 20) {
-            console.log('Yay! Dragons are dead!');
-            process.exit(0);
-        }
+//         const dragonsCount = getDragonsCount();
+//         if (dragonsCount != null && dragonsCount === 0 && state.timestamp > 20) {
+//             console.log('Yay! Dragons are dead!');
+//             process.exit(0);
+//         }
 
-        const actions = [
-            {unitId: state.unitId, action: 'ATTACK', timestamp: state.timestamp},
-            {unitId: state.unitId, action: 'HEAL', timestamp: state.timestamp},
-            {unitId: state.unitId, action: 'LEFT', timestamp: state.timestamp},
-            {unitId: state.unitId, action: 'UP', timestamp: state.timestamp},
-            {unitId: state.unitId, action: 'RIGHT', timestamp: state.timestamp},
-            {unitId: state.unitId, action: 'DOWN', timestamp: state.timestamp},
-        ];
+//         const actions = [
+//             {unitId: state.unitId, action: 'ATTACK', timestamp: state.timestamp},
+//             {unitId: state.unitId, action: 'HEAL', timestamp: state.timestamp},
+//             {unitId: state.unitId, action: 'LEFT', timestamp: state.timestamp},
+//             {unitId: state.unitId, action: 'UP', timestamp: state.timestamp},
+//             {unitId: state.unitId, action: 'RIGHT', timestamp: state.timestamp},
+//             {unitId: state.unitId, action: 'DOWN', timestamp: state.timestamp},
+//         ];
 
-        // Bot Logic!
-        let action = null
-        const location = getUnitLocation()
-        if (shouldAttack()) {
-            const nearestAttackableDragonLocation = getNearestUnit('dragon', 2)
-            if (nearestAttackableDragonLocation) {
-                action = actions[0]
-            } else {
-                // Move towards the nearest dragon
-                const nearestReachableDragonLocation = getNearestUnit('dragon', 13)
-                if (nearestReachableDragonLocation && location) {
-                    if (location![0] < nearestReachableDragonLocation![0]) {
-                        action = actions[4]
-                    } else if (location![0] > nearestReachableDragonLocation![0]) {
-                        action = actions[2]
-                    } else if (location![1] > nearestReachableDragonLocation![1]) {
-                        action = actions[3]
-                    } else {
-                        action = actions[5]
-                    }
-                } else {
-                    // Make some random movement
-                    action = actions[getRandomInt(2, actions.length - 1)]
-                }
-            } 
-        } else {
-            const nearestPlayerLocation = getNearestUnit('player', 5)
-            if (nearestPlayerLocation && state.board![nearestPlayerLocation[0]][nearestPlayerLocation[1]]!.health < 7) {
-                // If the poor guy's health is < 50% then heal
-                action = actions[1]
-            } else {
-                // Move towards the nearest dragon
-                const nearestReachableDragonLocation = getNearestUnit('dragon', 13)
-                if (nearestReachableDragonLocation && location) {
-                    if (location![0] < nearestReachableDragonLocation![0]) {
-                        action = actions[4]
-                    } else if (location![0] > nearestReachableDragonLocation![0]) {
-                        action = actions[2]
-                    } else if (location![1] > nearestReachableDragonLocation![1]) {
-                        action = actions[3]
-                    } else {
-                        action = actions[5]
-                    }
-                } else {
-                    // Make some random movement
-                    action = actions[getRandomInt(2, actions.length - 1)]
-                }
-            }
-        }
+//         // Bot Logic!
+//         let action = null
+//         const location = getUnitLocation()
+//         if (shouldAttack()) {
+//             const nearestAttackableDragonLocation = getNearestUnit('dragon', 2)
+//             if (nearestAttackableDragonLocation) {
+//                 action = actions[0]
+//             } else {
+//                 // Move towards the nearest dragon
+//                 const nearestReachableDragonLocation = getNearestUnit('dragon', 13)
+//                 if (nearestReachableDragonLocation && location) {
+//                     if (location![0] < nearestReachableDragonLocation![0]) {
+//                         action = actions[4]
+//                     } else if (location![0] > nearestReachableDragonLocation![0]) {
+//                         action = actions[2]
+//                     } else if (location![1] > nearestReachableDragonLocation![1]) {
+//                         action = actions[3]
+//                     } else {
+//                         action = actions[5]
+//                     }
+//                 } else {
+//                     // Make some random movement
+//                     action = actions[getRandomInt(2, actions.length - 1)]
+//                 }
+//             } 
+//         } else {
+//             const nearestPlayerLocation = getNearestUnit('player', 5)
+//             if (nearestPlayerLocation && state.board![nearestPlayerLocation[0]][nearestPlayerLocation[1]]!.health < 7) {
+//                 // If the poor guy's health is < 50% then heal
+//                 action = actions[1]
+//             } else {
+//                 // Move towards the nearest dragon
+//                 const nearestReachableDragonLocation = getNearestUnit('dragon', 13)
+//                 if (nearestReachableDragonLocation && location) {
+//                     if (location![0] < nearestReachableDragonLocation![0]) {
+//                         action = actions[4]
+//                     } else if (location![0] > nearestReachableDragonLocation![0]) {
+//                         action = actions[2]
+//                     } else if (location![1] > nearestReachableDragonLocation![1]) {
+//                         action = actions[3]
+//                     } else {
+//                         action = actions[5]
+//                     }
+//                 } else {
+//                     // Make some random movement
+//                     action = actions[getRandomInt(2, actions.length - 1)]
+//                 }
+//             }
+//         }
 
-        if (action) {
-            console.log('---> ACTION: ', action)
-            socket.emit('MESSAGE', action)
-        }
-    });
+//         if (action) {
+//             console.log('---> ACTION: ', action)
+//             socket.emit('MESSAGE', action)
+//         }
+//     });
 
 // Event loop wait
 (function wait () {

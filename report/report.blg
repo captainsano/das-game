@@ -8,57 +8,51 @@ Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Database file #1: report.bib
-Warning--I didn't find a database entry for "socket.io"
-Warning--I didn't find a database entry for "ReactJS"
-Warning--I didn't find a database entry for "TSS"
-Warning--I didn't find a database entry for "timewarp"
-Warning--I didn't find a database entry for "bunyan"
-Warning--I didn't find a database entry for "log4j"
 Warning--I didn't find a database entry for "lockstep"
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
 
 Done.
-You've used 5 entries,
+You've used 12 entries,
             4087 wiz_defined-function locations,
-            844 strings with 7594 characters,
-and the built_in function-call counts, 1386 in all, are:
-= -- 75
-> -- 5
-< -- 0
-+ -- 5
-- -- 0
-* -- 44
-:= -- 239
-add.period$ -- 5
-call.type$ -- 5
-change.case$ -- 5
-chr.to.int$ -- 0
-cite$ -- 5
-duplicate$ -- 120
-empty$ -- 156
-format.name$ -- 0
-if$ -- 293
+            865 strings with 8101 characters,
+and the built_in function-call counts, 4039 in all, are:
+= -- 262
+> -- 41
+< -- 9
++ -- 25
+- -- 6
+* -- 136
+:= -- 668
+add.period$ -- 15
+call.type$ -- 12
+change.case$ -- 12
+chr.to.int$ -- 15
+cite$ -- 12
+duplicate$ -- 346
+empty$ -- 430
+format.name$ -- 8
+if$ -- 904
 int.to.chr$ -- 0
-int.to.str$ -- 5
-missing$ -- 30
-newline$ -- 48
-num.names$ -- 0
-pop$ -- 120
+int.to.str$ -- 12
+missing$ -- 80
+newline$ -- 79
+num.names$ -- 2
+pop$ -- 285
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 95
+skip$ -- 295
 stack$ -- 0
-substring$ -- 0
-swap$ -- 50
-text.length$ -- 0
+substring$ -- 38
+swap$ -- 180
+text.length$ -- 4
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 5
+type$ -- 12
 warning$ -- 0
-while$ -- 0
-width$ -- 6
-write$ -- 62
-(There were 7 warnings)
+while$ -- 7
+width$ -- 14
+write$ -- 122
+(There was 1 warning)

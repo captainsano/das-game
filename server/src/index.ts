@@ -48,4 +48,4 @@ if (masterProcesses.length === 0) {
 setTimeout(() => {
   log.info('Starting socket server')
   socketServer(io, thisProcess, masterProcesses);
-}, 5000);
+}, 1000);
