@@ -16,6 +16,7 @@ const dragonAttack_1 = require("./loops/dragonAttack");
 const axios_1 = require("axios");
 const clientSocket = require("socket.io-client");
 const Logger_1 = require("./Logger");
+const os = require("os-utils");
 const log = Logger_1.Logger.getInstance('SocketServer');
 const createObservableFromSocketEvent = function createObservableFromSocketEvent(socket, eventName) {
     return rxjs_1.Observable.create((observer) => {
@@ -52,7 +53,7 @@ function socketServer(io, thisProcess, mastersList) {
         // Handle connection to master
         if (thisProcess === currentMasterList[0]) {
             isMaster = true;
-            initializeDragons();
+            // initializeDragons();
         }
         else {
             isMaster = false;
@@ -231,33 +232,59 @@ function socketServer(io, thisProcess, mastersList) {
         // AI gameplay (if current master)
         dragonAttack_1.dragonAttack(() => isMaster, (e) => primaryEventQueue.push(e));
         // Periodically cleanup the board for stale units that did not make any movements
-        let lastUnitPosition = {};
-        rxjs_1.Observable.interval(10000)
-            .filter(() => isMaster)
-            .subscribe(() => {
-            let unitsWithPosition = [];
-            for (let i = 0; i < gameState.board.length; i++) {
-                for (let j = 0; j < gameState.board.length; j++) {
-                    if (gameState.board[i][j] && gameState.board[i][j].type === 'player') {
-                        unitsWithPosition.push([gameState.board[i][j].id, [i, j]]);
-                    }
-                }
-            }
-            // Remaining units, remove from the board
-            unitsWithPosition.forEach(([id, currentPosition]) => {
-                if (lastUnitPosition[id] && lastUnitPosition[id].toString() === currentPosition.toString()) {
-                    log.info({ unitId: id }, 'Found a stale unit');
-                    const e = { timestamp: gameState.timestamp, unitId: id, action: 'REMOVE_UNIT' };
-                    primaryEventQueue.push(e);
-                }
-                lastUnitPosition[id] = currentPosition;
-            });
-        });
+        // let lastUnitPosition: {[unitId: number]: [number, number]} = {}
+        // Observable.interval(10000)
+        //   .filter(() => isMaster)
+        //   .subscribe(() => {
+        //     let unitsWithPosition: [number, [number, number]][] = [] 
+        //     for (let i = 0; i < gameState.board.length; i++) {
+        //       for (let j = 0; j < gameState.board.length; j++) {
+        //         if (gameState.board[i][j] && gameState.board[i][j]!.type === 'player') {
+        //           unitsWithPosition.push([gameState.board[i][j]!.id, [i, j]])
+        //         }
+        //       }
+        //     }
+        //     // Remaining units, remove from the board
+        //     unitsWithPosition.forEach(([id, currentPosition]) => {
+        //       if (lastUnitPosition[id] && lastUnitPosition[id].toString() === currentPosition.toString()) {
+        //         log.info({ unitId: id }, 'Found a stale unit')
+        //         const e = { timestamp: gameState.timestamp, unitId: id, action: 'REMOVE_UNIT' } as GameEvent
+        //         primaryEventQueue.push(e)
+        //       }
+        //       lastUnitPosition[id] = currentPosition
+        //     })
+        //   })
         // Periodically broadcast the current game state to all the connected clients
         rxjs_1.Observable.interval(Types_1.GAMEPLAY_INTERVAL * 100)
             .filter(() => !gameState.replaying)
             .subscribe(() => {
             io.sockets.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
+        });
+        /**
+         * For Benchmark
+         */
+        const getKnightCount = function () {
+            let count = 0;
+            for (let i = 0; i < gameState.board.length; i++) {
+                for (let j = 0; j < gameState.board.length; j++) {
+                    if (gameState.board[i][j] != null && gameState.board[i][j].type === 'player') {
+                        count += 1;
+                    }
+                }
+            }
+            return count;
+        };
+        rxjs_1.Observable
+            .interval(1000)
+            .subscribe(() => {
+            os.cpuUsage((v) => {
+                // Log the memory, cpu and the clients connected
+                log.info({
+                    count: getKnightCount(),
+                    cpu: v,
+                    memory: os.totalmem(),
+                }, 'Benchmark');
+            });
         });
     });
 }

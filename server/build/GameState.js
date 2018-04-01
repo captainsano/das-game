@@ -80,7 +80,7 @@ function printBoard(board) {
     }
 }
 exports.printBoard = printBoard;
-const BOARD_SIZE = 25;
+const BOARD_SIZE = 100;
 /**
  * Represents the game state
  */

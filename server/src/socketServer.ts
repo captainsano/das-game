@@ -9,6 +9,7 @@ import axios from 'axios';
 import * as clientSocket from 'socket.io-client'
 import { Logger } from './Logger';
 import { PlayerUnit } from './Unit';
+import * as os from 'os-utils'
 
 const log = Logger.getInstance('SocketServer')
 
@@ -52,7 +53,7 @@ export default async function socketServer(io: Server, thisProcess: string, mast
   // Handle connection to master
   if (thisProcess === currentMasterList[0]) {
     isMaster = true;
-    initializeDragons();
+    // initializeDragons();
   } else {
     isMaster = false;
 
@@ -241,29 +242,29 @@ export default async function socketServer(io: Server, thisProcess: string, mast
   dragonAttack(() => isMaster, (e) => primaryEventQueue.push(e));
 
   // Periodically cleanup the board for stale units that did not make any movements
-  let lastUnitPosition: {[unitId: number]: [number, number]} = {}
-  Observable.interval(10000)
-    .filter(() => isMaster)
-    .subscribe(() => {
-      let unitsWithPosition: [number, [number, number]][] = [] 
-      for (let i = 0; i < gameState.board.length; i++) {
-        for (let j = 0; j < gameState.board.length; j++) {
-          if (gameState.board[i][j] && gameState.board[i][j]!.type === 'player') {
-            unitsWithPosition.push([gameState.board[i][j]!.id, [i, j]])
-          }
-        }
-      }
+  // let lastUnitPosition: {[unitId: number]: [number, number]} = {}
+  // Observable.interval(10000)
+  //   .filter(() => isMaster)
+  //   .subscribe(() => {
+  //     let unitsWithPosition: [number, [number, number]][] = [] 
+  //     for (let i = 0; i < gameState.board.length; i++) {
+  //       for (let j = 0; j < gameState.board.length; j++) {
+  //         if (gameState.board[i][j] && gameState.board[i][j]!.type === 'player') {
+  //           unitsWithPosition.push([gameState.board[i][j]!.id, [i, j]])
+  //         }
+  //       }
+  //     }
       
-      // Remaining units, remove from the board
-      unitsWithPosition.forEach(([id, currentPosition]) => {
-        if (lastUnitPosition[id] && lastUnitPosition[id].toString() === currentPosition.toString()) {
-          log.info({ unitId: id }, 'Found a stale unit')
-          const e = { timestamp: gameState.timestamp, unitId: id, action: 'REMOVE_UNIT' } as GameEvent
-          primaryEventQueue.push(e)
-        }
-        lastUnitPosition[id] = currentPosition
-      })
-    })
+  //     // Remaining units, remove from the board
+  //     unitsWithPosition.forEach(([id, currentPosition]) => {
+  //       if (lastUnitPosition[id] && lastUnitPosition[id].toString() === currentPosition.toString()) {
+  //         log.info({ unitId: id }, 'Found a stale unit')
+  //         const e = { timestamp: gameState.timestamp, unitId: id, action: 'REMOVE_UNIT' } as GameEvent
+  //         primaryEventQueue.push(e)
+  //       }
+  //       lastUnitPosition[id] = currentPosition
+  //     })
+  //   })
 
   // Periodically broadcast the current game state to all the connected clients
   Observable.interval(GAMEPLAY_INTERVAL * 100)
@@ -271,4 +272,32 @@ export default async function socketServer(io: Server, thisProcess: string, mast
     .subscribe(() => {
       io.sockets.emit('STATE_UPDATE', { board: gameState.board, timestamp: gameState.timestamp });
     });
+
+  /** 
+   * For Benchmark 
+   */
+  const getKnightCount = function() {
+    let count = 0
+    for (let i = 0; i < gameState.board.length; i++) {
+      for (let j = 0; j < gameState.board.length; j++) {
+        if (gameState.board[i][j] != null && gameState.board[i][j]!.type === 'player') {
+          count += 1
+        }
+      }
+    }
+    return count
+  }
+
+  Observable
+    .interval(1000)
+    .subscribe(() => {
+      os.cpuUsage((v) => {
+        // Log the memory, cpu and the clients connected
+        log.info({
+          count: getKnightCount(),
+          cpu: v,
+          memory: os.totalmem(),
+        }, 'Benchmark')
+      })
+    })
 }

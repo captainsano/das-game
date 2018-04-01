@@ -31,6 +31,7 @@
     "bunyan-pretty-stream": "^1.0.1",
     "cors": "^2.8.4",
     "express": "^4.16.3",
+    "os-utils": "0.0.14",
     "ramda": "^0.25.0",
     "rxjs": "^5.5.7",
     "socket.io": "^2.0.4",
