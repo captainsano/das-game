@@ -179,6 +179,24 @@
 
   In order to aid future decisions on load balancing, network and other hardware capacity, we benchmark the a single server instance running on an EC2 instance on the number of socket connections that it can handle. We measure the memory and cpu load using NodeJS standard libraries as a function of clients connected. For this experiment, the AI dragons were disabled and the board size was expanded to 100x100 to accommodate as many clients as possible.
   
+  From \autoref{fig:memory_usage}, initial overall system memory usage was around 380MB. With the number of connection increasing to 1000, the memory usage reaches around 489MB. Considering the total memory usage and the number of connections, the average memory consumed by each connection is around $0.109MB$.
+  
+  We have also monitored and recorded the CPU usage when there are constant socket connection arriving at the rate of 5/second \autoref{fig:cpu_usage}. Basically, the CPU usage keeps an upward tendency with the number of connection increasing and the CPU usage reaches peak of around $8.5\%$ when there are approximately 900 connections. 
+  
+    \begin{figure}[tbp]
+    \centering
+      \includegraphics[width=\columnwidth]{MemoryUsage.png}
+    \caption{Overall Memory Usage}
+    \label{fig:memory_usage}
+  \end{figure}
+  
+    \begin{figure}[tbp]
+    \centering
+      \includegraphics[width=\columnwidth]{CPUUsage.png}
+    \caption{System CPU Usage.}
+    \label{fig:cpu_usage}
+  \end{figure}
+  
   \section{Discussion}
   
   \label{sec:discussion}
