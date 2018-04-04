@@ -22,18 +22,18 @@
         (0cm,0cm) rectangle (3pt,0.8em);},
     },
   }
-  
+
   \begin{document}
   
   \setlength{\tabcolsep}{10pt}
   \renewcommand{\arraystretch}{1.25}
-  
+
   \begin{center}
     \textbf{\Large{
       Dragon Arena System: \\ A distributed multiplayer board game
     }}\\
     \vspace{0.25cm}
-    \emph{Authors}: SB~Ramalingam Santhanakrishnan (4740270), \\ and Z~Sun () \\
+    \emph{Authors}: SB~Ramalingam Santhanakrishnan (4740270), \\ and Z~Sun (4733983) \\
     ICT Innovation, EEMCS, TU Delft\\
     \emph{Emails}: \{S.B.RamalingamSanthanakrishnan, Z.Sun-1\}@student.tudelft.nl\\
     \vspace{0.2cm}
@@ -49,7 +49,7 @@
   \vspace{0.2cm}
   
   \textbf{
-    \emph{Abstract}---\emph{Dragon Arena System} (DAS) is an online multiplayer board game service designed for the specific requirements of WantGame BV, implemented as a distributed system. Multiple players from different locations coordinate on the virtual board to eliminate a strong AI adversary, namely the dragons. The service is hosted on Amazon Web Services (AWS) IaaS barebone compute resources, running in multiple instances to allow for scalability and fault tolerance and the system is written in NodeJS in functional reactive style. In our design, we prioritize availability and the overall responsiveness of the service while maintaining a reasonable consistency. We test the system using simulated client bots and show that the system is responsive under load to 100 clients with a majority response time of 300ms and also analyze the fault tolerance capabilities of the system. 
+    \emph{Abstract}---\emph{Dragon Arena System} (DAS) is an online multiplayer board game service designed for the specific requirements of WantGame BV, implemented as a distributed system. Multiple players from different locations coordinate on the virtual board to eliminate a strong AI adversary, namely the dragons. The service is hosted on Amazon Web Services (AWS) IaaS barebone compute resources, running in multiple instances to allow for scalability and fault tolerance and the system is written in NodeJS in functional reactive style. In our design, we prioritize availability and the overall responsiveness of the service while maintaining a reasonable consistency. We test the system using simulated client bots and show that the system is responsive under load to 100 clients with a majority response time of 250ms and also analyze the fault tolerance capabilities of the system. 
   }
   
   \section{Introduction}
@@ -262,12 +262,18 @@
   
   \section{Conclusion} \label{conclusion}
   
-  In the report, we have designed and analysed a multiplayer gaming engine, aligned to the chief requirement of WantGame BV, to maintain responsiveness at peak traffic demands, which is clearly met by the system, as seen in the experimental results, where a majority of the clients are able to see their action executed in under 300 milliseconds, while maintaining a consistent view of the game. The tradeoff made in fault-tolerance and scalability has to be noted though, mainly in that the system is not elastic and has to have scaling mechanism in place without disruption of gameplay. In addition we found that in some cases, optimistically processing commands in the client and slave can greatly improve the responsiveness as well as offload the master server. After analyzing the tradeoffs, we think that it is a worthy endeavour for WantGame BV to build a system with the proposed design and keep improving as new features are to be met. On the other hand, for a game with larger squares we recommend an alternate architectures due to the memory load on the master.
+  In the report, we have designed and analysed a multiplayer gaming engine, aligned to the chief requirement of WantGame BV, to maintain responsiveness at peak traffic demands, which is clearly met by the system, as seen in the experimental results, where a majority of the clients are able to see their action executed in under 250 milliseconds, while maintaining a consistent view of the game. The tradeoff made in fault-tolerance and scalability has to be noted though, mainly in that the system is not elastic and has to have scaling mechanism in place without disruption of gameplay. In addition we found that in some cases, optimistically processing commands in the client and slave can greatly improve the responsiveness as well as offload the master server. After analyzing the tradeoffs, we think that it is a worthy endeavour for WantGame BV to build a system with the proposed design and keep improving as new features are to be met. On the other hand, for a game with larger squares we recommend an alternate architectures due to the memory load on the master.
   
   \bibliographystyle{myIEEEtran}
   \bibliography{report}
+
+  \section*{Appendix}
+
+  \subsection{Source Code}
+
+  The project source code is available at \url{https://github.com/captainsano/das-game}.
   
-  \section*{Appendix A: Time Sheets}
+  \subsection{Time Sheets}
   
   \begin{table}[htbp]
     \centering
