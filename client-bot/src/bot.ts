@@ -2,18 +2,23 @@
 const io = require('socket.io-client');
 import {Board, PlayerUnit} from './Board';
 import {Observable} from 'rxjs';
+import * as moment from 'moment';
 
 export function getRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 const servers = [
-    'ec2-54-173-107-234.compute-1.amazonaws.com:8000',
-    'ec2-54-152-208-227.compute-1.amazonaws.com:8001',
-    'ec2-54-234-102-60.compute-1.amazonaws.com:8002',
-    'ec2-54-85-168-103.compute-1.amazonaws.com:8003',
-    'ec2-34-238-171-163.compute-1.amazonaws.com:8004'
+	'localhost:8000',
+//    'ec2-54-173-107-234.compute-1.amazonaws.com:8000',
+//    'ec2-54-152-208-227.compute-1.amazonaws.com:8001',
+//    'ec2-54-234-102-60.compute-1.amazonaws.com:8002',
+//    'ec2-54-85-168-103.compute-1.amazonaws.com:8003',
+//    'ec2-34-238-171-163.compute-1.amazonaws.com:8004'
 ]
+
+let lastPosition: [number, number] = [];
+let lastMoveSendTs = 0;
 
 let randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;
 let socket = io.connect(randomServer, { reconnection: false });
@@ -28,16 +33,16 @@ const state = {
 const connect = function() {
     randomServer = `http://${servers[getRandomInt(0, servers.length - 1)]}`;
     socket = io.connect(randomServer, { reconnection: false });
-    console.log('---> Connecting to: ', randomServer);
+    // console.log('---> Connecting to: ', randomServer);
 
     socket.on('connect', () => {
-        console.log('---> Connected to ', randomServer);
+        // console.log('---> Connected to ', randomServer);
         state.connected = true;
 
         if (state.unitId === -1) {
             socket.emit('SPAWN', {}, (id: number) => {
                 state.unitId = id;
-                console.log('---> Unit id: ', id);
+                // console.log('---> Unit id: ', id);
                 socket.emit('MESSAGE', {unitId: state.unitId, action: 'PING'})
             });
         } else {
@@ -54,6 +59,20 @@ const connect = function() {
             // console.log('--> Got state update');
             state.board = board;
             state.timestamp = timestamp;
+
+            // Find the current position and store it
+            if (state.unitId >= 0 && state.board) {
+                for (let i = 0; i < state.board.length; i++) {
+                    for (let j = 0; j < state.board.length; j++) {
+                        if (state.board[i][j] != null && state.board[i][j]!.id === state.unitId) {
+                            if ([i, j].toString() !== lastPosition.toString()) {
+                                lastMoveSendTs !== 0 && console.log(`${moment.utc().toISOString()}, ${state.unitId}, ${moment.utc().valueOf() - lastMoveSendTs}`)
+                                lastPosition = [i, j];
+                            }
+                        }
+                    }
+                }
+            }
         });
 
         socket.on('disconnect', () => {
@@ -93,7 +112,8 @@ const getUnitLocation = function getUnitLocation(): [number, number] | null {
 }
 
 const isAlive = function isAlive(): boolean {
-    return getUnitLocation() != null
+    return true
+    // return getUnitLocation() != null
 };
 
 const shouldAttack = function shouldAttack(): boolean {
@@ -150,7 +170,7 @@ const getDragonsCount = function getDragonsCount(): number | null {
 
 // Game loop
 Observable
-    .interval(1500)
+    .interval(1000)
     // Do not send actions until connected or unitId is allocated
     .filter(() => state.connected)
     .filter(() => state.unitId !== -1)
@@ -161,10 +181,10 @@ Observable
         }
 
         const dragonsCount = getDragonsCount();
-        if (dragonsCount != null && dragonsCount === 0 && state.timestamp > 20) {
-            console.log('Yay! Dragons are dead!');
-            process.exit(0);
-        }
+        // if (dragonsCount != null && dragonsCount === 0 && state.timestamp > 20) {
+        //     console.log('Yay! Dragons are dead!');
+        //     process.exit(0);
+        // }
 
         const actions = [
             {unitId: state.unitId, action: 'ATTACK', timestamp: state.timestamp},
@@ -226,8 +246,9 @@ Observable
         }
 
         if (action) {
-            console.log('---> ACTION: ', action)
+            // console.log('---> ACTION: ', action)
             socket.emit('MESSAGE', action)
+            lastMoveSendTs = moment.utc().valueOf();
         }
     });
 

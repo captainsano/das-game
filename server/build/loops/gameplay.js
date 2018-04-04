@@ -85,21 +85,13 @@ function gameplay(getNextEvent) {
         const nextEvent = getNextEvent();
         if (!nextEvent)
             return;
-        if (gameState.timestamp - nextEvent.timestamp <= 10) {
+        if (gameState.timestamp - nextEvent.timestamp <= 250) {
             const prevTimestamp = gameState.timestamp;
             const prevBoard = ramda_1.clone(gameState.board);
             executeEvent(nextEvent);
             replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent: ramda_1.clone(nextEvent) });
         }
-        else {
-            // Do the actual thing
-            const stateBackup = (() => {
-                const prevTimestamp = gameState.timestamp;
-                const prevBoard = ramda_1.clone(gameState.board);
-                executeEvent(nextEvent);
-                replaySet.push({ timestamp: prevTimestamp, board: prevBoard, nextEvent: ramda_1.clone(nextEvent) });
-                return [ramda_1.clone(gameState.board), gameState.timestamp];
-            })();
+        else if (gameState.timestamp - nextEvent.timestamp <= 500) {
             gameState.replaying = true;
             log.info({ eventTimestamp: nextEvent.timestamp, currentTimestamp: gameState.timestamp }, 'Replaying due to stale timestamp');
             const currentBoard = ramda_1.clone(gameState.board);
@@ -135,11 +127,6 @@ function gameplay(getNextEvent) {
                     }
                 }
                 log.info({ replayedEvents: eventsToExecute.length, currentTimestamp: gameState.timestamp, diffSquares: diff }, 'Done replaying events');
-                // Clear replay set if too much is in there
-                if (replaySet.length > 50) {
-                    replaySet.length = 0;
-                }
-                gameState.setState(stateBackup[0], stateBackup[1]);
             }
             else {
                 log.info('Sufficient replay state not found to rollback. Making best effort execution');

@@ -19,12 +19,14 @@
 \citation{aws}
 \citation{nodejs}
 \citation{socket.io}
+\citation{redux}
+\citation{rxjs}
 \citation{ReactJS}
-\citation{TSS}
-\citation{timewarp}
+\citation{cronin2004efficient}
+\citation{guo2012game}
 \citation{typescript}
 \citation{reactivex}
-\citation{express}
+\citation{redux}
 \@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}}
 \@writefile{toc}{\contentsline {section}{\numberline {II}Application}{1}{section.2}}
 \newlabel{application}{{II}{1}{Application}{section.2}{}}
@@ -38,30 +40,62 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-B}}Working}{2}{subsection.3.2}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Master components with message flows}}{2}{figure.2}}
 \newlabel{fig:master_components}{{2}{2}{Master components with message flows}{figure.2}{}}
+\citation{cronin2004efficient}
+\citation{cronin2004efficient}
 \citation{bunyan}
 \citation{log4j}
-\citation{lockstep}
+\citation{funkhouser1995ring}
+\citation{pandas}
+\citation{scipy}
+\citation{numpy}
+\citation{matplotlib}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {III-C}}System Capabilities \& Limitations}{3}{subsection.3.3}}
 \@writefile{toc}{\contentsline {section}{\numberline {IV}Experimental Results}{3}{section.4}}
 \newlabel{experiments}{{IV}{3}{Experimental Results}{section.4}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-A}}Setup}{3}{subsection.4.1}}
-\bibstyle{myIEEEtran}
-\bibdata{report}
-\bibcite{aws}{1}
-\bibcite{nodejs}{2}
-\bibcite{typescript}{3}
-\bibcite{reactivex}{4}
-\bibcite{express}{5}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Factors affecting gameplay}}{4}{table.1}}
+\newlabel{tab:factors}{{I}{4}{Factors affecting gameplay}{table.1}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}}Experiments}{4}{subsection.4.2}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}1}Overheads}{4}{subsubsection.4.2.1}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}2}Consistency Deviation}{4}{subsubsection.4.2.2}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}3}Responsiveness}{4}{subsubsection.4.2.3}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}4}Fault tolerance}{4}{subsubsection.4.2.4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-C}}Server connection Benchmark}{4}{subsection.4.3}}
-\@writefile{toc}{\contentsline {section}{\numberline {V}Discussion}{4}{section.5}}
-\newlabel{sec:discussion}{{V}{4}{Discussion}{section.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {VI}Conclusion}{4}{section.6}}
-\newlabel{conclusion}{{VI}{4}{Conclusion}{section.6}{}}
-\@writefile{toc}{\contentsline {section}{References}{4}{section*.1}}
-\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Time spent on the project per activity.}}{4}{table.1}}
-\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Time spent per experiment.}}{5}{table.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Average consistency deviation of all the clients for a sample time slice of 180 seconds.}}{4}{figure.3}}
+\newlabel{fig:consistency}{{3}{4}{Average consistency deviation of all the clients for a sample time slice of 180 seconds}{figure.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Average response time of all the clients, over a period of time.}}{4}{figure.4}}
+\newlabel{fig:responsiveness}{{4}{4}{Average response time of all the clients, over a period of time}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Consistency maintenance during server failures}}{5}{figure.5}}
+\newlabel{fig:fault_tolerance_consistency}{{5}{5}{Consistency maintenance during server failures}{figure.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Responsiveness maintenance during server failure}}{5}{figure.6}}
+\newlabel{fig:fault_tolerance_responsiveness}{{6}{5}{Responsiveness maintenance during server failure}{figure.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\unhbox \voidb@x \hbox {IV-B}4}Fault tolerance}{5}{subsubsection.4.2.4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Overall Memory Usage, benchmarked on a single server for upto 1000 client connections}}{5}{figure.7}}
+\newlabel{fig:memory_usage}{{7}{5}{Overall Memory Usage, benchmarked on a single server for upto 1000 client connections}{figure.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\unhbox \voidb@x \hbox {IV-C}}Server connection Benchmark}{5}{subsection.4.3}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Discussion}{5}{section.5}}
+\newlabel{sec:discussion}{{V}{5}{Discussion}{section.5}{}}
+\bibstyle{myIEEEtran}
+\bibdata{report}
+\bibcite{aws}{1}
+\bibcite{nodejs}{2}
+\bibcite{socket.io}{3}
+\bibcite{redux}{4}
+\bibcite{rxjs}{5}
+\bibcite{ReactJS}{6}
+\bibcite{cronin2004efficient}{7}
+\bibcite{guo2012game}{8}
+\bibcite{typescript}{9}
+\bibcite{reactivex}{10}
+\bibcite{bunyan}{11}
+\bibcite{log4j}{12}
+\bibcite{funkhouser1995ring}{13}
+\bibcite{pandas}{14}
+\bibcite{scipy}{15}
+\bibcite{numpy}{16}
+\bibcite{matplotlib}{17}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces System CPU Usage, benchmarked on a single server for upto 1000 client connections}}{6}{figure.8}}
+\newlabel{fig:cpu_usage}{{8}{6}{System CPU Usage, benchmarked on a single server for upto 1000 client connections}{figure.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Conclusion}{6}{section.6}}
+\newlabel{conclusion}{{VI}{6}{Conclusion}{section.6}{}}
+\@writefile{toc}{\contentsline {section}{References}{6}{section*.1}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Time spent on the project per activity.}}{6}{table.2}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Time spent per experiment.}}{6}{table.3}}

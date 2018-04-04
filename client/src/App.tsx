@@ -9,7 +9,7 @@ export function getRandomInt(min: number, max: number): number {
 }
 
 const servers = [
-    'ec2-34-238-171-163.compute-1.amazonaws.com:8004'
+    'localhost:8000'
 ];
 
 class App extends React.Component {
@@ -123,19 +123,20 @@ class App extends React.Component {
     }
 
     getDragonsCount() {
-        if (this.state.board != null) {
-            let dragonsCount = 0;
-            for (let i = 0; i < (this.state.board! as Board).length; i++) {
-                for (let j = 0; j < (this.state.board! as Board).length; j++) {
-                    if (this.state.board![i][j] != null && this.state.board![i][j].type === 'dragon') {
-                        dragonsCount += 1
-                    }
-                }
-            }
-            return dragonsCount
-        }
+        // if (this.state.board != null) {
+        //     let dragonsCount = 0;
+        //     for (let i = 0; i < (this.state.board! as Board).length; i++) {
+        //         for (let j = 0; j < (this.state.board! as Board).length; j++) {
+        //             if (this.state.board![i][j] != null && this.state.board![i][j].type === 'dragon') {
+        //                 dragonsCount += 1
+        //             }
+        //         }
+        //     }
+        //     return dragonsCount
+        // }
 
-        return -1;
+        // return -1;
+        return 20;
     }
 
     render() {

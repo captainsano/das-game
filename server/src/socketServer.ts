@@ -38,15 +38,15 @@ export default async function socketServer(io: Server, thisProcess: string, mast
 
   // Initialize the game with 20 dragons
   const initializeDragons = () => {
-    for (let i = 0; i < 20; i++) {
-      primaryEventQueue.push({
-        at: gameState.getRandomVacantSquare(),
-        timestamp: gameState.timestamp,
-        unitId: -1,
-        action: 'SPAWN_UNIT',
-        type: 'dragon',
-      } as SpawnUnitEvent)
-    }
+    // for (let i = 0; i < 20; i++) {
+    //   primaryEventQueue.push({
+    //     at: gameState.getRandomVacantSquare(),
+    //     timestamp: gameState.timestamp,
+    //     unitId: -1,
+    //     action: 'SPAWN_UNIT',
+    //     type: 'dragon',
+    //   } as SpawnUnitEvent)
+    // }
   };
 
   // Handle connection to master

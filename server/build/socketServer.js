@@ -39,15 +39,15 @@ function socketServer(io, thisProcess, mastersList) {
         };
         // Initialize the game with 20 dragons
         const initializeDragons = () => {
-            for (let i = 0; i < 20; i++) {
-                primaryEventQueue.push({
-                    at: gameState.getRandomVacantSquare(),
-                    timestamp: gameState.timestamp,
-                    unitId: -1,
-                    action: 'SPAWN_UNIT',
-                    type: 'dragon',
-                });
-            }
+            // for (let i = 0; i < 20; i++) {
+            //   primaryEventQueue.push({
+            //     at: gameState.getRandomVacantSquare(),
+            //     timestamp: gameState.timestamp,
+            //     unitId: -1,
+            //     action: 'SPAWN_UNIT',
+            //     type: 'dragon',
+            //   } as SpawnUnitEvent)
+            // }
         };
         // Handle connection to master
         if (thisProcess === currentMasterList[0]) {
